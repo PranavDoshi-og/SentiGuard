@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SentiGuard — Phishing Detection</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ── Navigation ─────────────────────────────── -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <span class="nav-logo">🛡️</span>
+      <span class="nav-title">SentiGuard</span>
+    </div>
+    <div class="nav-status">
+      <span id="apiStatusDot" class="status-dot offline"></span>
+      <span id="apiStatusText" class="status-text">Connecting...</span>
+    </div>
+  </nav>
+
+  <!-- ── Hero ────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-content">
+      <div class="hero-badge">AI-Powered Security</div>
+      <h1 class="hero-title">
+        Detect Phishing<br />
+        <span class="hero-accent">Before It's Too Late</span>
+      </h1>
+      <p class="hero-sub">
+        Analyze URLs and QR codes instantly with machine learning.
+        Get a trust score, verdict, and detailed risk breakdown.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Tabs ────────────────────────────────────── -->
+  <main class="main-container">
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="url">
+        <span>🔗</span> URL Scanner
+      </button>
+      <button class="tab-btn" data-tab="qr">
+        <span>📷</span> QR Scanner
+      </button>
+    </div>
+
+    <!-- URL Tab -->
+    <div id="tab-url" class="tab-panel active">
+      <div class="input-card">
+        <label class="input-label">Enter URL to scan</label>
+        <div class="input-row">
+          <input
+            type="url"
+            id="urlInput"
+            class="url-input"
+            placeholder="https://example.com/login?id=..."
+            autocomplete="off"
+          />
+          <button id="urlScanBtn" class="scan-btn">
+            <span class="btn-text">Analyze</span>
+            <span class="btn-spinner" style="display:none;">⟳</span>
+          </button>
+        </div>
+        <div class="quick-tests">
+          <span class="quick-label">Try:</span>
+          <button class="quick-btn" data-url="https://www.google.com">google.com</button>
+          <button class="quick-btn" data-url="http://paypa1-secure.tk/update@user?verify=true">suspicious URL</button>
+          <button class="quick-btn" data-url="http://192.168.1.1/login/paypal">IP URL</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR Tab -->
+    <div id="tab-qr" class="tab-panel">
+      <div class="input-card">
+        <label class="input-label">Upload QR Code Image</label>
+        <div
+          id="dropZone"
+          class="drop-zone"
+          ondragover="event.preventDefault()"
+          ondrop="handleDrop(event)"
+        >
+          <div class="drop-icon">📷</div>
+          <p class="drop-text">Drag & drop a QR code image here</p>
+          <p class="drop-sub">or</p>
+          <label class="file-btn" for="qrFileInput">Browse File</label>
+          <input type="file" id="qrFileInput" accept="image/*" style="display:none;" />
+          <p class="drop-formats">PNG, JPG, WebP supported</p>
+        </div>
+        <div id="qrPreview" style="display:none;" class="qr-preview">
+          <img id="qrPreviewImg" alt="QR Preview" />
+          <button id="qrScanBtn" class="scan-btn">Scan QR Code</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Results Panel ──────────────────────────── -->
+    <div id="resultPanel" class="result-panel" style="display:none;">
+
+      <!-- Verdict Header -->
+      <div id="verdictHeader" class="verdict-header">
+        <div class="verdict-icon" id="verdictIcon">🛡️</div>
+        <div class="verdict-info">
+          <div id="verdictLabel" class="verdict-label">–</div>
+          <div id="scannedUrl" class="scanned-url"></div>
+        </div>
+      </div>
+
+      <!-- Trust Score -->
+      <div class="trust-section">
+        <div class="trust-header">
+          <span class="trust-title">Trust Score</span>
+          <span id="trustScoreNum" class="trust-score-num">–</span>
+        </div>
+        <div class="trust-track">
+          <div id="trustFill" class="trust-fill"></div>
+        </div>
+        <div class="trust-labels">
+          <span>Dangerous</span>
+          <span>Safe</span>
+        </div>
+      </div>
+
+      <!-- Risk Factors + Feature Grid -->
+      <div class="details-grid">
+        <div id="riskFactorsCard" class="detail-card" style="display:none;">
+          <h3 class="detail-title">⚠️ Risk Factors</h3>
+          <ul id="riskFactorsList" class="risk-list"></ul>
+        </div>
+        <div class="detail-card">
+          <h3 class="detail-title">🔬 URL Features</h3>
+          <div id="featuresGrid" class="features-grid"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Error Banner ───────────────────────────── -->
+    <div id="errorBanner" class="error-banner" style="display:none;"></div>
+
+  </main>
+
+  <!-- ── Footer ──────────────────────────────────── -->
+  <footer class="footer">
+    <p>SentiGuard v1.0 &nbsp;·&nbsp; AI-powered phishing detection &nbsp;·&nbsp;
+      <a href="http://localhost:8000/docs" target="_blank">API Docs</a>
+    </p>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

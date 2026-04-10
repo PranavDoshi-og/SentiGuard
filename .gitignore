@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+.Python
+venv/
+env/
+.env
+*.egg-info/
+dist/
+build/
+
+# ML Models (large binary files)
+backend/models/*.pkl
+backend/models/*.joblib
+
+# Logs
+backend/logs/*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/settings.json
+
+# Node (if any)
+node_modules/

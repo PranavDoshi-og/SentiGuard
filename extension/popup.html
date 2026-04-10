@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SentiGuard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 320px;
+      min-height: 200px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #161b22, #1f2937);
+      padding: 16px 18px;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-logo { font-size: 22px; }
+
+    .header-text h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #58a6ff;
+      letter-spacing: 0.5px;
+    }
+
+    .header-text p {
+      font-size: 11px;
+      color: #8b949e;
+      margin-top: 1px;
+    }
+
+    .status-section {
+      padding: 16px 18px;
+    }
+
+    .status-card {
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-card.scanning {
+      background: #161b22;
+      border: 1px solid #30363d;
+    }
+
+    .status-card.safe {
+      background: #0d2818;
+      border: 1px solid #238636;
+    }
+
+    .status-card.phishing {
+      background: #2d1010;
+      border: 1px solid #da3633;
+    }
+
+    .status-card.error {
+      background: #1c1a10;
+      border: 1px solid #9e6a03;
+    }
+
+    .status-icon { font-size: 26px; flex-shrink: 0; }
+
+    .status-info h2 {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .status-info p {
+      font-size: 12px;
+      color: #8b949e;
+      margin-top: 2px;
+    }
+
+    .trust-bar {
+      margin-top: 10px;
+    }
+
+    .trust-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #8b949e;
+      margin-bottom: 4px;
+    }
+
+    .trust-bar-track {
+      height: 6px;
+      background: #21262d;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .trust-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.6s ease;
+    }
+
+    .trust-bar-fill.safe    { background: #3fb950; }
+    .trust-bar-fill.phishing { background: #f85149; }
+
+    .scan-btn {
+      width: 100%;
+      background: #1f6feb;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: background 0.2s;
+    }
+
+    .scan-btn:hover { background: #388bfd; }
+    .scan-btn:disabled { background: #21262d; color: #484f58; cursor: default; }
+
+    .risk-list {
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: #161b22;
+      border-radius: 8px;
+      border: 1px solid #30363d;
+    }
+
+    .risk-list h3 {
+      font-size: 11px;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .risk-item {
+      font-size: 12px;
+      color: #f85149;
+      padding: 3px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    .risk-item::before { content: "•"; flex-shrink: 0; }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 18px;
+      border-top: 1px solid #21262d;
+      font-size: 12px;
+      color: #8b949e;
+    }
+
+    .toggle {
+      position: relative;
+      width: 36px;
+      height: 20px;
+    }
+
+    .toggle input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: #30363d;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle-slider::before {
+      content: "";
+      position: absolute;
+      height: 14px; width: 14px;
+      left: 3px; top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+
+    .toggle input:checked + .toggle-slider { background: #238636; }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(16px); }
+
+    .footer {
+      padding: 8px 18px 12px;
+      font-size: 10px;
+      color: #484f58;
+      text-align: center;
+    }
+
+    .footer a {
+      color: #58a6ff;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-logo">🛡️</div>
+    <div class="header-text">
+      <h1>SentiGuard</h1>
+      <p>Phishing Detection Active</p>
+    </div>
+  </div>
+
+  <div class="status-section">
+    <div id="statusCard" class="status-card scanning">
+      <div class="status-icon" id="statusIcon">🔍</div>
+      <div class="status-info">
+        <h2 id="statusTitle">Checking page...</h2>
+        <p id="statusSub">Analyzing current URL</p>
+      </div>
+    </div>
+
+    <div id="trustBarContainer" class="trust-bar" style="display:none;">
+      <div class="trust-bar-label">
+        <span>Trust Score</span>
+        <span id="trustScoreLabel">–</span>
+      </div>
+      <div class="trust-bar-track">
+        <div id="trustBarFill" class="trust-bar-fill safe" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <div id="riskList" class="risk-list" style="display:none;">
+      <h3>Risk Factors</h3>
+      <div id="riskItems"></div>
+    </div>
+
+    <button id="scanBtn" class="scan-btn" style="margin-top: 12px;">
+      Scan Current Page
+    </button>
+  </div>
+
+  <div class="toggle-row">
+    <span>Auto-scan all pages</span>
+    <label class="toggle">
+      <input type="checkbox" id="autoScanToggle" checked />
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+
+  <div class="footer">
+    <a href="http://localhost:5500/index.html" target="_blank">Open SentiGuard Website</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
