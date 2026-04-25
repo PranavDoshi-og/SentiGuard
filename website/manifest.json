@@ -1,0 +1,92 @@
+{
+  "name": "SentiGuard - Phishing Detection",
+  "short_name": "SentiGuard",
+  "description": "AI-powered phishing detection for URLs and QR codes",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#080c10",
+  "background_color": "#080c10",
+  "icons": [
+    {
+      "src": "assets/icon48.png",
+      "sizes": "48x48",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/icon512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "assets/screenshot-narrow.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "assets/screenshot-wide.png",
+      "sizes": "1080x1440",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "categories": ["security", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Scan URL",
+      "short_name": "URL Scan",
+      "description": "Quickly scan a URL for phishing threats",
+      "url": "/?tab=url",
+      "icons": [
+        {
+          "src": "assets/icon96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Scan QR Code",
+      "short_name": "QR Scan",
+      "description": "Scan a QR code for hidden threats",
+      "url": "/?tab=qr",
+      "icons": [
+        {
+          "src": "assets/icon96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

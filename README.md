@@ -1,7 +1,7 @@
 # 🛡️ SentiGuard — AI-Powered Phishing Detection
 
 > Detect phishing URLs and QR codes in real time using Machine Learning.
-> Includes a FastAPI backend, Chrome Extension, and a web frontend.
+> Includes a FastAPI backend, mobile QR camera scanning, and a PWA-enabled frontend.
 
 ---
 
@@ -149,13 +149,18 @@ After training, **restart the API** — it will auto-load the new model.
 
 The website is plain HTML/CSS/JS — no build step needed.
 
-**Option A — VS Code Live Server (recommended)**
+**Option A — Backend-hosted site (recommended)**
+1. Run the backend: `uvicorn main:app --reload --host 0.0.0.0 --port 8000`
+2. Open `http://localhost:8000`
+
+This is the preferred flow for mobile QR scanning because the site and API share the same origin.
+
+**Option B — VS Code Live Server**
 1. Install the **Live Server** extension in VS Code
 2. Right-click `website/index.html` → **"Open with Live Server"**
 3. Opens at `http://localhost:5500`
 
-**Option B — Open directly**
-- Double-click `website/index.html` in your file explorer
+> For mobile camera scanning, use `http://localhost:8000` or HTTPS via ngrok.
 
 ---
 
@@ -173,134 +178,146 @@ The website is plain HTML/CSS/JS — no build step needed.
 
 ---
 
+## ✅ What Changed in This Version
+
+- Mobile QR camera scanner now works on phones
+- Backend serves the website statically and exposes `/api`
+- Frontend now uses `API_BASE = "/api"` for same-origin requests
+- Service worker cache version was bumped, and scripts are cache-busted using `?v=3`
+- Secure mobile access is now supported through HTTPS ngrok tunnels
+- QR scanner logic now handles mobile video ready-state and displays camera status
+
+---
+
+## 📱 Mobile Phone Access
+
+### Secure HTTPS with ngrok
+Mobile camera scanning requires a secure context.
+Use ngrok to expose `localhost:8000` over HTTPS.
+
+```bash
+# Authenticate ngrok once
+./ngrok.exe config add-authtoken YOUR_TOKEN
+
+# Start the tunnel for the backend + website
+./ngrok.exe http 8000
+```
+
+Open the generated HTTPS URL on your phone.
+The website and API share the same origin, so the app can camera-scan QR codes correctly.
+
+### Local LAN access (testing only)
+If you prefer local network access:
+1. Run backend on `0.0.0.0:8000`
+2. Open `http://<laptop-ip>:8000` on the phone
+
+This is okay for testing, but HTTPS is recommended for camera scanning.
+
+---
+
+## 📲 QR Camera Scanner
+
+The phone QR scanner now includes:
+- camera start / stop controls
+- live scan status messages
+- overlay framing for QR alignment
+- fallback upload mode
+
+### Use the scanner
+1. Open **QR Scanner**
+2. Tap **Start Scanner**
+3. Point the camera at the QR code
+4. If detected, the QR data or URL is processed instantly
+
+If the QR value is a URL, it will be scanned using the phishing API.
+If it is raw text, the app shows the content directly.
+
+---
+
+## ⚡ Service Worker / Cache Refresh
+
+The PWA service worker now:
+- caches the site and static assets
+- serves static files from the backend-hosted site
+- updates to the new version automatically when a new SW is installed
+
+If the phone still shows an old UI, refresh fully or clear browser site data.
+
+---
+
 ## 🔌 API Reference
 
-| Method | Endpoint          | Description                         |
-|--------|-------------------|-------------------------------------|
-| GET    | `/api/health`     | Check API status                    |
-| POST   | `/api/scan/url`   | Scan a URL for phishing             |
-| POST   | `/api/scan/qr`    | Upload a QR image, scan extracted URL |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/health` | Check API status |
+| POST | `/api/scan/url` | Scan a URL for phishing |
+| POST | `/api/scan/qr` | Upload QR image and scan extracted URL |
 
 ### POST `/api/scan/url`
 
 **Request:**
 ```json
-{ "url": "https://suspicious-site.tk/login" }
+{ "url": "https://example.com/login" }
 ```
 
 **Response:**
 ```json
 {
-  "url": "https://suspicious-site.tk/login",
-  "verdict": "PHISHING",
-  "trust_score": 12.5,
-  "confidence": 0.875,
-  "risk_factors": [
-    "Suspicious top-level domain",
-    "Has login keyword in URL"
-  ],
+  "url": "https://example.com/login",
+  "verdict": "SAFE",
+  "trust_score": 84.3,
+  "risk_factors": [],
   "features": {
     "has_https": true,
-    "url_length": 35,
-    "has_suspicious_tld": true,
-    ...
+    "url_length": 32,
+    "num_dots": 2
   }
 }
 ```
 
----
+### POST `/api/scan/qr`
 
-## 🧠 ML Features Extracted
-
-The model analyzes **25+ features** from each URL:
-
-| Category         | Features |
-|------------------|----------|
-| Structure        | `url_length`, `domain_length`, `path_length`, `path_depth` |
-| Protocol         | `has_https`, `has_http` |
-| Domain           | `num_dots`, `subdomain_count`, `has_ip_address`, `has_suspicious_tld`, `is_trusted_domain` |
-| Special chars    | `has_at_symbol`, `has_double_slash`, `num_hyphens`, `has_underscore` |
-| Obfuscation      | `has_hex_encoding`, `has_unicode_escape`, `num_encoded_chars` |
-| Query string     | `num_params`, `query_length` |
-| Keywords         | `has_login_keyword`, `has_bank_keyword`, `has_free_keyword` |
-| File type        | `has_exe_extension` |
+Send a `multipart/form-data` request with `file` set to the QR image.
 
 ---
 
-## 🚀 Deployment (Optional)
+## 🧠 ML Features
 
-### Backend → Render (Free Tier)
-
-1. Push your project to GitHub
-2. Go to https://render.com → New → Web Service
-3. Connect your repo, set:
-   - **Root directory:** `backend`
-   - **Build command:** `pip install -r requirements.txt`
-   - **Start command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
-4. After deploy, update `API_BASE` in:
-   - `website/js/app.js`
-   - `extension/background.js`
-   - `extension/popup.js`
-
-### Frontend → Netlify (Free)
-
-1. Go to https://netlify.com → Add new site → Deploy manually
-2. Drag & drop the `website/` folder
-3. Your site is live instantly
-
-### Frontend → Vercel (Free)
-
-```bash
-npm install -g vercel
-cd website
-vercel
-```
+The model extracts URL signals such as:
+- `has_https`, `has_http`
+- `num_dots`, `subdomain_count`, `has_ip_address`
+- `path_depth`, `num_params`, `query_length`
+- `has_at_symbol`, `num_hyphens`, `has_hex_encoding`
+- `has_login_keyword`, `has_bank_keyword`
 
 ---
 
-## 🛠️ Development Tips
+## 💻 Development Notes
 
-### Backend hot-reload
-The `--reload` flag in uvicorn means the server auto-restarts when you save Python files.
-
-### Checking logs
-```bash
-# Live log output
-tail -f backend/logs/sentiguard.log
-```
-
-### Testing the API manually
-```bash
-curl -X POST http://localhost:8000/api/scan/url \
-  -H "Content-Type: application/json" \
-  -d '{"url": "http://free-prize.xyz/claim@user"}'
-```
-
-### Viewing API docs
-FastAPI auto-generates interactive docs:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+- Run backend with `uvicorn --reload` for hot reloading
+- API docs are available at `http://localhost:8000/docs`
+- Frontend uses same-origin API calls to `/api`
 
 ---
 
 ## 📦 Tech Stack
 
-| Layer       | Technology                          |
-|-------------|-------------------------------------|
-| Backend     | FastAPI, Uvicorn, Pydantic          |
-| ML          | scikit-learn (Random Forest), NumPy, Pandas |
-| QR Decoding | pyzbar, Pillow                      |
-| Frontend    | Vanilla HTML, CSS, JavaScript       |
-| Extension   | Chrome Manifest v3 (Service Worker) |
+| Layer | Technology |
+|-------|------------|
+| Backend | FastAPI, Uvicorn, Pydantic |
+| ML | scikit-learn, NumPy, Pandas |
+| QR | jsQR (frontend), pyzbar/Pillow (backend) |
+| Frontend | HTML, CSS, JavaScript |
+| PWA | Service Worker, cache versioning |
 
 ---
 
 ## 🤝 Contributing
 
 1. Fork the repo
-2. Create a feature branch: `git checkout -b feature/my-feature`
-3. Commit changes: `git commit -m "Add my feature"`
-4. Push and open a Pull Request
+2. Create a branch: `git checkout -b feature/your-improvement`
+3. Commit: `git commit -m "Add feature"`
+4. Push and open a PR
 
 ---
 

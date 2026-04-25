@@ -1,0 +1,16 @@
+{
+  "buildCommand": "echo 'Static site - no build needed'",
+  "installCommand": "echo 'No dependencies'",
+  "framework": "static",
+  "outputDirectory": "website",
+  "rootDirectory": ".",
+  "env": {
+    "NEXT_PUBLIC_API_URL": {
+      "description": "Backend API URL for scans",
+      "example": "https://api.sentiguard.com",
+      "required": false
+    }
+  },
+  "devCommand": "python -m http.server 8000 --directory website",
+  "devPath": "website"
+}

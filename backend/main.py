@@ -3,8 +3,11 @@ SentiGuard - FastAPI Backend Entry Point
 """
 
 import uvicorn
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.routes import scan, health
 from app.utils.logger import setup_logger
@@ -33,6 +36,9 @@ app.add_middleware(
 # ─── Routers ──────────────────────────────────────────────
 app.include_router(health.router, prefix="/api", tags=["Health"])
 app.include_router(scan.router,   prefix="/api", tags=["Scan"])
+
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "website"
+app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
 
 
 @app.on_event("startup")

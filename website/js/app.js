@@ -5,7 +5,7 @@
 
 "use strict";
 
-const API_BASE = "http://localhost:8000/api";
+const API_BASE = "/api";
 
 // ─── DOM References ────────────────────────────────────────────────────────────
 
@@ -47,11 +47,19 @@ async function checkAPIHealth() {
 
 // ─── URL Scanning ──────────────────────────────────────────────────────────────
 
-async function scanURL() {
-  const url = urlInput.value.trim();
-  if (!url) return showError("Please enter a URL.");
+async function scanURL(urlParam) {
+  // Accept URL as parameter (from camera QR scanner) or from input field
+  const rawUrl = (urlParam || urlInput.value).trim();
+  if (!rawUrl) return showError("Please enter a URL.");
+
+  let url = rawUrl;
   if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    return showError("URL must start with http:// or https://");
+    url = `https://${url}`;
+  }
+
+  // Update input field if scanning from parameter (e.g., from camera)
+  if (urlParam && !urlInput.value) {
+    urlInput.value = url;
   }
 
   setLoading(urlScanBtn, true);
