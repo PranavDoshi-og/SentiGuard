@@ -39,7 +39,7 @@ app.include_router(scan.router,   prefix="/api", tags=["Scan"])
 
 frontend_candidates = [
     Path(__file__).resolve().parent.parent / "website",  # Repo root checkout
-    Path(__file__).resolve().parent / "website",         # Fallback if app layout changes
+    Path(__file__).resolve().parent / "website",         # Railway backend-root copy
 ]
 FRONTEND_DIR = next((p for p in frontend_candidates if p.exists()), None)
 
