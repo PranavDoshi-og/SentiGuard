@@ -165,15 +165,15 @@
     </p>
   </footer>
 
-  <script src="js/app.js?v=4"></script>
-  <script src="js/qr-scanner.js?v=4"></script>
+  <script src="js/app.js?v=5"></script>
+  <script src="js/qr-scanner.js?v=5"></script>
   
   <!-- Service Worker Registration -->
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", async () => {
         try {
-          const registration = await navigator.serviceWorker.register("sw.js?v=4");
+          const registration = await navigator.serviceWorker.register("sw.js?v=5");
           console.log("[PWA] Service Worker registered:", registration);
 
           if (registration.waiting) {

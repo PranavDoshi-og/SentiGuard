@@ -142,10 +142,73 @@ async function scanQR() {
     showResult(data);
 
   } catch (err) {
+    const shouldUseBrowserFallback =
+      err.message.includes("QR scanning libraries not available") ||
+      err.message.includes("No URL found in QR code") ||
+      err.message.includes("Server error: 500");
+
+    if (shouldUseBrowserFallback) {
+      try {
+        const extractedUrl = await decodeQRCodeInBrowser(selectedQRFile);
+        await scanURL(extractedUrl);
+        return;
+      } catch (decodeErr) {
+        showError(`QR scan failed: ${decodeErr.message}`);
+        return;
+      }
+    }
+
     showError(`QR scan failed: ${err.message}`);
   } finally {
     setLoading(qrScanBtn, false);
   }
+}
+
+async function decodeQRCodeInBrowser(file) {
+  if (!window.jsQR) {
+    throw new Error("QR decoder not loaded in browser.");
+  }
+
+  const image = await loadImageFromFile(file);
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+
+  canvas.width = image.naturalWidth || image.width;
+  canvas.height = image.naturalHeight || image.height;
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+  const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+  const decoded = window.jsQR(imageData.data, imageData.width, imageData.height);
+
+  if (!decoded || !decoded.data) {
+    throw new Error("Could not decode a QR code from this image.");
+  }
+
+  const value = decoded.data.trim();
+  if (value.startsWith("http://") || value.startsWith("https://")) {
+    return value;
+  }
+  if (value.includes(".")) {
+    return `https://${value}`;
+  }
+
+  throw new Error("QR code does not contain a URL.");
+}
+
+function loadImageFromFile(file) {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(img);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Unable to read the uploaded image."));
+    };
+    img.src = objectUrl;
+  });
 }
 
 
