@@ -37,8 +37,16 @@ app.add_middleware(
 app.include_router(health.router, prefix="/api", tags=["Health"])
 app.include_router(scan.router,   prefix="/api", tags=["Scan"])
 
-FRONTEND_DIR = Path(__file__).resolve().parent.parent / "website"
-app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
+frontend_candidates = [
+    Path(__file__).resolve().parent.parent / "website",  # Repo root checkout
+    Path(__file__).resolve().parent / "website",         # Fallback if app layout changes
+]
+FRONTEND_DIR = next((p for p in frontend_candidates if p.exists()), None)
+
+if FRONTEND_DIR:
+    app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
+else:
+    logger.warning("Frontend directory not found. Serving API only.")
 
 
 @app.on_event("startup")
