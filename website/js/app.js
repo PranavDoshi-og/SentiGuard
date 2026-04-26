@@ -239,10 +239,24 @@ document.querySelectorAll(".quick-btn").forEach(btn => {
 
 // ─── Event Listeners ───────────────────────────────────────────────────────────
 
-urlScanBtn.addEventListener("click", scanURL);
+function triggerURLScan(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  if (urlScanBtn.disabled) return;
+  scanURL();
+}
+
+urlScanBtn.addEventListener("click", triggerURLScan);
+urlScanBtn.addEventListener("touchend", triggerURLScan, { passive: false });
 
 urlInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") scanURL();
+  if (e.key === "Enter") {
+    e.preventDefault();
+    triggerURLScan(e);
+  }
 });
 
 qrFileInput.addEventListener("change", (e) => {
