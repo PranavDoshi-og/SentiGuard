@@ -1,0 +1,2 @@
+# Railway root requirements for the combined app
+-r backend/requirements.txt
