@@ -68,7 +68,7 @@ class PhishingPredictor:
             logger.error(f"ML prediction failed: {e}. Falling back to heuristic.")
             return self._heuristic_predict(features)
 
-    def _heuristic_predict(self, features: dict) -> float:
+    def _heuristic_predict(self, features: dict) -> dict:
         """
         Rule-based fallback when no ML model is available.
         Counts risk signals and computes a simple phishing score.
