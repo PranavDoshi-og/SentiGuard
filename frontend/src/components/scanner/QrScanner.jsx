@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { UploadCloud, Camera, X, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import jsQR from 'jsqr';
 
 export default function QrScanner({ onScan, isLoading }) {
   const [file, setFile] = useState(null);
@@ -67,7 +68,7 @@ export default function QrScanner({ onScan, isLoading }) {
   };
 
   const scanFrame = () => {
-    if (!videoRef.current || !canvasRef.current || !window.jsQR) {
+    if (!videoRef.current || !canvasRef.current || !jsQR) {
       animationRef.current = requestAnimationFrame(scanFrame);
       return;
     }
@@ -80,7 +81,7 @@ export default function QrScanner({ onScan, isLoading }) {
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const code = window.jsQR(imageData.data, imageData.width, imageData.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
 
       if (code) {
         setCameraStatus('QR Found! Initiating Scan...');

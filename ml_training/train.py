@@ -43,7 +43,7 @@ MODEL_SAVE_PATH = Path(__file__).parent.parent / "backend" / "models" / "phishin
 MODEL_SAVE_PATH.parent.mkdir(exist_ok=True)
 
 
-def generate_demo_dataset(n_samples: int = 2000) -> pd.DataFrame:
+def generate_demo_dataset(n_samples: int = 10000) -> pd.DataFrame:
     """
     Generates a small synthetic dataset for testing.
     NOT suitable for production – replace with a real dataset.
@@ -60,7 +60,11 @@ def generate_demo_dataset(n_samples: int = 2000) -> pd.DataFrame:
         "http://login-apple-id-suspended.top/",
         "http://microsoft-security-alert.gq/download.exe",
         "http://paypal.com.phishing-test.tk/login",
-    ] * (n_samples // 16)
+        "http://netflix-billing-update.info/login",
+        "http://wellsfargo-urgent-alert.net/auth",
+        "http://chase-security-check.com/verify",
+        "http://instagram-verified-badge.tk/login"
+    ] * (n_samples // 24)
 
     safe_urls = [
         "https://www.google.com/search?q=python",
@@ -71,7 +75,11 @@ def generate_demo_dataset(n_samples: int = 2000) -> pd.DataFrame:
         "https://linkedin.com/in/user",
         "https://docs.python.org/3/library/",
         "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    ] * (n_samples // 16)
+        "https://www.wikipedia.org/",
+        "https://www.reddit.com/r/MachineLearning/",
+        "https://twitter.com/home",
+        "https://www.apple.com/iphone/"
+    ] * (n_samples // 24)
 
     rows = []
     for url in phishing_urls[:n_samples // 2]:
@@ -180,7 +188,7 @@ if __name__ == "__main__":
     if args.data:
         df = load_dataset(args.data, args.label)
     else:
-        df = generate_demo_dataset(n_samples=2000)
+        df = generate_demo_dataset(n_samples=10000)
 
     model = train(df)
     save_model(model)
