@@ -3,8 +3,6 @@
  * Handles popup UI logic: scan current tab, display results, toggle auto-scan.
  */
 
-const API_BASE = "http://localhost:8000/api";
-
 const statusCard      = document.getElementById("statusCard");
 const statusIcon      = document.getElementById("statusIcon");
 const statusTitle     = document.getElementById("statusTitle");
@@ -41,16 +39,16 @@ async function scanURL(url) {
   setStatus("scanning");
 
   try {
-    const response = await fetch(`${API_BASE}/scan/url`, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ url }),
+    const response = await chrome.runtime.sendMessage({
+      type: "SCAN_URL",
+      url,
     });
 
-    if (!response.ok) throw new Error(`API error ${response.status}`);
+    if (!response?.success) {
+      throw new Error(response?.error || "API unreachable");
+    }
 
-    const result = await response.json();
-    displayResult(result);
+    displayResult(response.data);
 
   } catch (err) {
     setStatus("error", err.message);
@@ -97,7 +95,7 @@ function setStatus(state, detail = "") {
   const states = {
     scanning:    { cls: "scanning", icon: "🔍", title: "Scanning...",       sub: "Analyzing current URL"    },
     unavailable: { cls: "scanning", icon: "ℹ️",  title: "Not available",     sub: "Can't scan this page"     },
-    error:       { cls: "error",    icon: "⚠️",  title: "API Unreachable",    sub: detail || "Is the backend running?" },
+    error:       { cls: "error",    icon: "⚠️",  title: "API Unreachable",    sub: detail || "Check extension API settings." },
   };
 
   const s = states[state] || states.scanning;

@@ -6,7 +6,7 @@
  * so they send a message here and we make the fetch on their behalf.
  */
 
-const API_BASE = "http://localhost:8000/api"; // Change to production URL after deployment
+const DEFAULT_API_BASE = "https://sentiguard-hkef.onrender.com/api";
 
 // ─── Message Listener ──────────────────────────────────────────────────────────
 
@@ -72,7 +72,9 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 // ─── API Call ──────────────────────────────────────────────────────────────────
 
 async function scanURL(url) {
-  const response = await fetch(`${API_BASE}/scan/url`, {
+  const { apiBase } = await getSettings();
+
+  const response = await fetch(`${apiBase}/scan/url`, {
     method:  "POST",
     headers: { "Content-Type": "application/json" },
     body:    JSON.stringify({ url }),
@@ -90,7 +92,15 @@ async function scanURL(url) {
 // ─── Settings ─────────────────────────────────────────────────────────────────
 
 async function getSettings() {
-  const defaults = { autoScan: true, showBadge: true };
+  const defaults = {
+    autoScan: true,
+    showBadge: true,
+    apiBase: DEFAULT_API_BASE,
+  };
   const stored = await chrome.storage.sync.get(defaults);
-  return { ...defaults, ...stored };
+  return {
+    ...defaults,
+    ...stored,
+    apiBase: (stored.apiBase || defaults.apiBase).replace(/\/$/, ""),
+  };
 }
