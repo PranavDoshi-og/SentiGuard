@@ -66,19 +66,21 @@
     <div id="tab-url" class="tab-panel active">
       <div class="input-card">
         <label class="input-label">Enter URL to scan</label>
-        <div class="input-row">
-          <input
-            type="url"
-            id="urlInput"
-            class="url-input"
-            placeholder="https://example.com/login?id=..."
-            autocomplete="off"
-          />
-          <button id="urlScanBtn" class="scan-btn" type="button">
-            <span class="btn-text">Analyze</span>
-            <span class="btn-spinner" style="display:none;">⟳</span>
-          </button>
-        </div>
+        <form id="urlScanForm">
+          <div class="input-row">
+            <input
+              type="url"
+              id="urlInput"
+              class="url-input"
+              placeholder="https://example.com/login?id=..."
+              autocomplete="off"
+            />
+            <button id="urlScanBtn" class="scan-btn" type="submit">
+              <span class="btn-text">Analyze</span>
+              <span class="btn-spinner" style="display:none;">⟳</span>
+            </button>
+          </div>
+        </form>
         <div class="quick-tests">
           <span class="quick-label">Try:</span>
           <button class="quick-btn" data-url="https://www.google.com">google.com</button>
@@ -165,15 +167,15 @@
     </p>
   </footer>
 
-  <script src="js/app.js?v=5"></script>
-  <script src="js/qr-scanner.js?v=5"></script>
+  <script src="js/app.js?v=6"></script>
+  <script src="js/qr-scanner.js?v=6"></script>
   
   <!-- Service Worker Registration -->
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", async () => {
         try {
-          const registration = await navigator.serviceWorker.register("sw.js?v=5");
+          const registration = await navigator.serviceWorker.register("sw.js?v=6");
           console.log("[PWA] Service Worker registered:", registration);
 
           let hasRefreshed = false;

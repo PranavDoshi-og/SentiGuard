@@ -11,6 +11,7 @@ const API_BASE = "/api";
 
 const apiStatusDot   = document.getElementById("apiStatusDot");
 const apiStatusText  = document.getElementById("apiStatusText");
+const urlScanForm    = document.getElementById("urlScanForm");
 const urlInput       = document.getElementById("urlInput");
 const urlScanBtn     = document.getElementById("urlScanBtn");
 const qrFileInput    = document.getElementById("qrFileInput");
@@ -303,24 +304,12 @@ document.querySelectorAll(".quick-btn").forEach(btn => {
 // ─── Event Listeners ───────────────────────────────────────────────────────────
 
 function triggerURLScan(event) {
-  if (event) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-
+  event.preventDefault();
   if (urlScanBtn.disabled) return;
   scanURL();
 }
 
-urlScanBtn.addEventListener("click", triggerURLScan);
-urlScanBtn.addEventListener("touchend", triggerURLScan, { passive: false });
-
-urlInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    triggerURLScan(e);
-  }
-});
+urlScanForm.addEventListener("submit", triggerURLScan);
 
 qrFileInput.addEventListener("change", (e) => {
   handleFileSelect(e.target.files[0]);
