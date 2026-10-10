@@ -64,7 +64,7 @@ def generate_demo_dataset(n_samples: int = 10000) -> pd.DataFrame:
         "http://wellsfargo-urgent-alert.net/auth",
         "http://chase-security-check.com/verify",
         "http://instagram-verified-badge.tk/login"
-    ] * (n_samples // 24)
+    ] * (n_samples // 12)
 
     safe_urls = [
         "https://www.google.com/search?q=python",
@@ -79,7 +79,7 @@ def generate_demo_dataset(n_samples: int = 10000) -> pd.DataFrame:
         "https://www.reddit.com/r/MachineLearning/",
         "https://twitter.com/home",
         "https://www.apple.com/iphone/"
-    ] * (n_samples // 24)
+    ] * (n_samples // 12)
 
     rows = []
     for url in phishing_urls[:n_samples // 2]:

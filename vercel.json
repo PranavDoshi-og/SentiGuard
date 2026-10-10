@@ -4,13 +4,28 @@
   "framework": "static",
   "outputDirectory": "website",
   "rootDirectory": ".",
-  "env": {
-    "NEXT_PUBLIC_API_URL": {
-      "description": "Backend API URL for scans",
-      "example": "https://api.sentiguard.com",
-      "required": false
+  "rewrites": [
+    {
+      "source": "/api",
+      "destination": "https://sentiguard-api.onrender.com/api"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "https://sentiguard-api.onrender.com/api/:path*"
+    },
+    {
+      "source": "/docs",
+      "destination": "https://sentiguard-api.onrender.com/docs"
+    },
+    {
+      "source": "/redoc",
+      "destination": "https://sentiguard-api.onrender.com/redoc"
+    },
+    {
+      "source": "/openapi.json",
+      "destination": "https://sentiguard-api.onrender.com/openapi.json"
     }
-  },
+  ],
   "devCommand": "python -m http.server 8000 --directory website",
   "devPath": "website"
 }

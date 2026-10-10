@@ -3,13 +3,13 @@
  * Enables PWA features: offline support, caching, background sync
  */
 
-const CACHE_NAME = "sentiguard-v3";
+const CACHE_NAME = "sentiguard-v5";
 const URLS_TO_CACHE = [
   "/",
   "/index.html",
   "/css/style.css",
-  "/js/app.js?v=3",
-  "/js/qr-scanner.js?v=3",
+  "/js/app.js?v=5",
+  "/js/qr-scanner.js?v=5",
   "/assets/icon48.png",
   "/assets/icon96.png",
   "/assets/icon192.png",

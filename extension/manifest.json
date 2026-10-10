@@ -10,7 +10,7 @@
   ],
   "host_permissions": [
     "http://localhost:8000/*",
-    "https://sentiguard-api.onrender.com/*"
+    "https://sentiguard-hkef.onrender.com/*"
   ],
   "background": {
     "service_worker": "background.js",

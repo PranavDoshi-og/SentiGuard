@@ -74,7 +74,7 @@
             placeholder="https://example.com/login?id=..."
             autocomplete="off"
           />
-          <button id="urlScanBtn" class="scan-btn">
+          <button id="urlScanBtn" class="scan-btn" type="button">
             <span class="btn-text">Analyze</span>
             <span class="btn-spinner" style="display:none;">⟳</span>
           </button>
@@ -107,7 +107,7 @@
         </div>
         <div id="qrPreview" style="display:none;" class="qr-preview">
           <img id="qrPreviewImg" alt="QR Preview" />
-          <button id="qrScanBtn" class="scan-btn">Scan QR Code</button>
+          <button id="qrScanBtn" class="scan-btn" type="button">Scan QR Code</button>
         </div>
       </div>
     </div>
@@ -161,25 +161,31 @@
   <!-- ── Footer ──────────────────────────────────── -->
   <footer class="footer">
     <p>SentiGuard v1.0 &nbsp;·&nbsp; AI-powered phishing detection &nbsp;·&nbsp;
-      <a href="http://localhost:8000/docs" target="_blank">API Docs</a>
+      <a href="/docs" target="_blank" rel="noreferrer">API Docs</a>
     </p>
   </footer>
 
-  <script src="js/app.js?v=3"></script>
-  <script src="js/qr-scanner.js?v=3"></script>
+  <script src="js/app.js?v=5"></script>
+  <script src="js/qr-scanner.js?v=5"></script>
   
   <!-- Service Worker Registration -->
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", async () => {
         try {
-          const registration = await navigator.serviceWorker.register("sw.js?v=3");
+          const registration = await navigator.serviceWorker.register("sw.js?v=5");
           console.log("[PWA] Service Worker registered:", registration);
 
-          if (registration.waiting) {
-            console.log("[PWA] Service Worker waiting - reloading page");
+          let hasRefreshed = false;
+          navigator.serviceWorker.addEventListener("controllerchange", () => {
+            // Prevent multiple reloads if the browser fires controllerchange more than once.
+            if (hasRefreshed) return;
+            hasRefreshed = true;
             window.location.reload();
-            return;
+          });
+
+          if (registration.waiting) {
+            registration.waiting.postMessage({ type: "SKIP_WAITING" });
           }
 
           registration.addEventListener("updatefound", () => {
@@ -187,12 +193,10 @@
             if (!newWorker) return;
             newWorker.addEventListener("statechange", () => {
               if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-                window.location.reload();
+                newWorker.postMessage({ type: "SKIP_WAITING" });
               }
             });
           });
-
-          await registration.update();
         } catch (error) {
           console.warn("[PWA] Service Worker registration failed:", error);
         }

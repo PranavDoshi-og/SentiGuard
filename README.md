@@ -253,6 +253,36 @@ If the phone still shows an old UI, refresh fully or clear browser site data.
 | POST | `/api/scan/url` | Scan a URL for phishing |
 | POST | `/api/scan/qr` | Upload QR image and scan extracted URL |
 
+---
+
+## 🚀 Deployment
+
+### Backend on Render
+
+Create a new Render Web Service from the repository root with these settings:
+
+- Root directory: `backend`
+- Build command: `pip install -r requirements.txt`
+- Start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+
+Render should expose the service at `https://sentiguard-api.onrender.com`.
+
+If you prefer one-click deploys, use the repo's `render.yaml` blueprint from Render's "New Blueprint" flow.
+
+### Frontend on Vercel
+
+Deploy the repository root on Vercel using `vercel.json`.
+
+- Static output directory: `website`
+- API requests: `/api/*` are rewritten to the Render backend
+- Docs links: `/docs`, `/redoc`, and `/openapi.json` are proxied to Render
+
+No extra frontend environment variables are required for this setup because Vercel handles the proxying.
+
+### Why this setup
+
+This keeps the frontend simple, avoids cross-origin browser requests, and sidesteps the folder-path issues that can happen when both apps are hosted under one platform.
+
 ### POST `/api/scan/url`
 
 **Request:**
