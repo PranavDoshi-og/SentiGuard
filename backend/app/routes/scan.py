@@ -37,6 +37,9 @@ class ScanResponse(BaseModel):
     confidence: float     # 0.0 – 1.0
     risk_factors: list[str]
     features: dict
+    shap_explanations: list[dict] = []
+    model_type: str = "ML Classifier"
+    network_profile: dict = {}
 
 
 # ─── Endpoints ────────────────────────────────────────────
