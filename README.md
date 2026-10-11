@@ -265,9 +265,9 @@ Create a new Render Web Service from the repository root with these settings:
 - Build command: `pip install -r requirements.txt`
 - Start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
 
-Render should expose the service at `https://sentiguard-api.onrender.com`.
+The backend this repo currently deploys against is `https://sentiguard-hkef.onrender.com`, and that is the URL `vercel.json` and the extension (`manifest.json` host permissions + `background.js` API base) are configured for.
 
-If you prefer one-click deploys, use the repo's `render.yaml` blueprint from Render's "New Blueprint" flow.
+If you prefer one-click deploys, use the repo's `render.yaml` blueprint from Render's "New Blueprint" flow — it creates a service named `sentiguard-api`, so update `vercel.json` and the extension's `manifest.json` to match the URL your service gets.
 
 ### Frontend on Vercel
 

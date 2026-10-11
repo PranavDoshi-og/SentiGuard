@@ -3,185 +3,607 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#080c10" />
-  <meta name="description" content="AI-powered phishing detection for URLs and QR codes" />
+  <meta name="theme-color" content="#070a0f" />
+  <meta name="description" content="Enterprise phishing threat intelligence and zero-day heuristic detection engine for URLs and QR code payloads." />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="SentiGuard" />
   
-  <title>SentiGuard — Phishing Detection</title>
+  <title>SentiGuard — Cyber Threat Intelligence & Phishing Scanner</title>
   
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="assets/icon48.png" />
   <link rel="apple-touch-icon" href="assets/icon192.png" />
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css?v=7" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   
-  <!-- jsQR Library for QR code detection -->
+  <!-- jsQR Library for client-side QR code detection -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 </head>
 <body>
 
-  <!-- ── Navigation ─────────────────────────────── -->
-  <nav class="navbar">
-    <div class="nav-brand">
-      <span class="nav-logo">🛡️</span>
-      <span class="nav-title">SentiGuard</span>
-    </div>
-    <div class="nav-status">
-      <span id="apiStatusDot" class="status-dot offline"></span>
-      <span id="apiStatusText" class="status-text">Connecting...</span>
-    </div>
-  </nav>
+  <!-- ── Global Background Grid ────────────────────────── -->
+  <div class="bg-grid-overlay" aria-hidden="true"></div>
 
-  <!-- ── Hero ────────────────────────────────────── -->
-  <section class="hero">
-    <div class="hero-glow"></div>
-    <div class="hero-content">
-      <div class="hero-badge">AI-Powered Security</div>
-      <h1 class="hero-title">
-        Detect Phishing<br />
-        <span class="hero-accent">Before It's Too Late</span>
-      </h1>
-      <p class="hero-sub">
-        Analyze URLs and QR codes instantly with machine learning.
-        Get a trust score, verdict, and detailed risk breakdown.
-      </p>
-    </div>
-  </section>
+  <!-- ── Navigation Bar ───────────────────────────────── -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="nav-brand">
+        <div class="brand-shield" aria-hidden="true">
+          <svg class="icon-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">SentiGuard</span>
+          <span class="brand-tag">Threat Intel</span>
+        </div>
+      </div>
 
-  <!-- ── Tabs ────────────────────────────────────── -->
+      <div class="nav-telemetry">
+        <div class="telemetry-item model-tag" title="Active Machine Learning Model">
+          <svg class="mini-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
+            <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
+            <line x1="6" y1="6" x2="6.01" y2="6"/>
+            <line x1="6" y1="18" x2="6.01" y2="18"/>
+          </svg>
+          <span>RF-25 Heuristics</span>
+        </div>
+
+        <div class="telemetry-item status-indicator" id="systemStatusPill" title="API Status & Real-time Latency">
+          <span id="apiStatusDot" class="status-beacon connecting"></span>
+          <span id="apiStatusText" class="status-label">Connecting...</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Main Workspace ───────────────────────────────── -->
   <main class="main-container">
-    <div class="tab-bar">
-      <button class="tab-btn active" data-tab="url">
-        <span>🔗</span> URL Scanner
-      </button>
-      <button class="tab-btn" data-tab="qr">
-        <span>📷</span> QR Scanner
-      </button>
-    </div>
 
-    <!-- URL Tab -->
-    <div id="tab-url" class="tab-panel active">
-      <div class="input-card">
-        <label class="input-label">Enter URL to scan</label>
-        <form id="urlScanForm">
-          <div class="input-row">
+    <!-- ── Hero Command Header ───────────────────────── -->
+    <section class="hero-section">
+      <div class="hero-kicker">
+        <span class="kicker-badge">
+          <svg class="kicker-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+          Zero-Day Phishing Detection
+        </span>
+      </div>
+      
+      <h1 class="hero-headline">
+        Real-Time Malicious URL & QR Payload Intelligence
+      </h1>
+      
+      <p class="hero-description">
+        Analyze unknown links and QR payloads against 25 structural heuristic vectors, lexical anomaly models, and domain obfuscation signatures before interaction.
+      </p>
+    </section>
+
+    <!-- ── Analysis Mode Switcher ────────────────────── -->
+    <nav class="mode-tabs" role="tablist" aria-label="Analysis Modes">
+      <button class="mode-tab active" data-tab="url" role="tab" aria-selected="true" id="tabBtnUrl">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+        </svg>
+        <span>URL Threat Scanner</span>
+      </button>
+
+      <button class="mode-tab" data-tab="qr" role="tab" aria-selected="false" id="tabBtnQr">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"/>
+          <rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        <span>QR Payload Inspector</span>
+      </button>
+
+      <button class="mode-tab" data-tab="history" role="tab" aria-selected="false" id="tabBtnHistory">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <span>Session Audit Log</span>
+        <span class="history-badge" id="historyCounter" style="display:none;">0</span>
+      </button>
+    </nav>
+
+    <!-- ── Panel: URL Threat Scanner ─────────────────── -->
+    <div id="tab-url" class="panel-section active" role="tabpanel">
+      <div class="command-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-label">Target URL or Hostname</span>
+            <span class="card-caption">Input standard URI, IP endpoint, or homoglyph domain</span>
+          </div>
+          <button type="button" class="action-ghost-btn" id="pasteClipboardBtn" title="Paste from clipboard">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            <span>Paste</span>
+          </button>
+        </div>
+
+        <form id="urlScanForm" class="omnibar-form">
+          <div class="omnibar-wrapper" id="omnibarWrapper">
+            <div class="scheme-pill" id="schemeBadge" title="Protocol Indicator">
+              <span id="schemeText">HTTPS</span>
+            </div>
+
             <input
-              type="url"
+              type="text"
               id="urlInput"
-              class="url-input"
-              placeholder="https://example.com/login?id=..."
+              class="omnibar-input"
+              placeholder="e.g. login.paypa1-account-update.tk/verify?token=..."
               autocomplete="off"
+              spellcheck="false"
+              required
             />
-            <button id="urlScanBtn" class="scan-btn" type="submit">
-              <span class="btn-text">Analyze</span>
-              <span class="btn-spinner" style="display:none;">⟳</span>
+
+            <button type="button" id="clearInputBtn" class="clear-input-btn" title="Clear input" style="display:none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+
+            <button id="urlScanBtn" class="analyze-btn" type="submit">
+              <span class="btn-text">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                Analyze
+              </span>
+              <span class="btn-loader" style="display:none;" aria-hidden="true"></span>
             </button>
           </div>
         </form>
-        <div class="quick-tests">
-          <span class="quick-label">Try:</span>
-          <button class="quick-btn" data-url="https://www.google.com">google.com</button>
-          <button class="quick-btn" data-url="http://paypa1-secure.tk/update@user?verify=true">suspicious URL</button>
-          <button class="quick-btn" data-url="http://192.168.1.1/login/paypal">IP URL</button>
+
+        <!-- Threat Presets -->
+        <div class="threat-presets">
+          <span class="presets-label">Threat Vectors:</span>
+          <div class="presets-group">
+            <button class="preset-chip benign" data-url="https://github.com/security">
+              <span class="preset-dot"></span>
+              <span>Clean Domain (github.com)</span>
+            </button>
+            <button class="preset-chip malicious" data-url="http://paypa1-secure-verify.tk/update@auth?id=9921">
+              <span class="preset-dot"></span>
+              <span>Credential Harvester (.tk)</span>
+            </button>
+            <button class="preset-chip suspicious" data-url="http://192.168.1.1/admin/login?session=active">
+              <span class="preset-dot"></span>
+              <span>Raw IP Host</span>
+            </button>
+            <button class="preset-chip suspicious" data-url="https://xn--pple-43d.com/appleid/verify">
+              <span class="preset-dot"></span>
+              <span>Punycode / Homoglyph</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- QR Tab -->
-    <div id="tab-qr" class="tab-panel">
-      <div class="input-card">
-        <label class="input-label">Upload QR Code Image</label>
-        <div
-          id="dropZone"
-          class="drop-zone"
-          ondragover="event.preventDefault()"
-          ondrop="handleDrop(event)"
-        >
-          <div class="drop-icon">📷</div>
-          <p class="drop-text">Drag & drop a QR code image here</p>
-          <p class="drop-sub">or</p>
-          <label class="file-btn" for="qrFileInput">Browse File</label>
-          <input type="file" id="qrFileInput" accept="image/*" style="display:none;" />
-          <p class="drop-formats">PNG, JPG, WebP supported</p>
+    <!-- ── Panel: QR Payload Inspector ───────────────── -->
+    <div id="tab-qr" class="panel-section" role="tabpanel">
+      <div class="command-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-label">QR Code Payload Inspection</span>
+            <span class="card-caption">Decode embedded links via hardware camera feed or file analysis</span>
+          </div>
+
+          <div class="qr-mode-selector">
+            <button type="button" class="qr-switch-btn active" id="qrSwitchCamera">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+              <span>Live Camera</span>
+            </button>
+            <button type="button" class="qr-switch-btn" id="qrSwitchUpload">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <span>File Upload</span>
+            </button>
+          </div>
         </div>
-        <div id="qrPreview" style="display:none;" class="qr-preview">
-          <img id="qrPreviewImg" alt="QR Preview" />
-          <button id="qrScanBtn" class="scan-btn" type="button">Scan QR Code</button>
+
+        <!-- Camera Interface -->
+        <div id="cameraScannerSection" class="camera-hub">
+          <div class="viewfinder-frame">
+            <video id="qrVideo" class="camera-stream" playsinline autoplay muted></video>
+            <canvas id="qrCanvas" style="display: none;"></canvas>
+
+            <!-- Optical HUD Reticle Overlay -->
+            <div class="hud-overlay" aria-hidden="true">
+              <div class="hud-corner top-left"></div>
+              <div class="hud-corner top-right"></div>
+              <div class="hud-corner bottom-left"></div>
+              <div class="hud-corner bottom-right"></div>
+              <div class="hud-laser-beam"></div>
+            </div>
+
+            <div class="viewfinder-footer">
+              <div class="status-chip" id="cameraStatusPill">
+                <span class="status-pulse-dot"></span>
+                <span id="cameraStatusText">Standby · Click Start to initialize camera</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="camera-toolbar">
+            <button id="startScanBtn" class="analyze-btn" type="button">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              <span>Start Camera Scanner</span>
+            </button>
+            <button id="stopScanBtn" class="action-secondary-btn" type="button" style="display: none;">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="6" y="6" width="12" height="12"/>
+              </svg>
+              <span>Stop Scanner</span>
+            </button>
+            <button id="switchCameraDirectionBtn" class="action-ghost-btn" type="button" style="display:none;" title="Flip camera">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 10c0-4.418-3.582-8-8-8s-8 3.582-8 8v2"/>
+                <path d="M4 14c0 4.418 3.582 8 8 8s8-3.582 8-8v-2"/>
+                <polyline points="1 9 4 12 7 9"/>
+                <polyline points="23 15 20 12 17 15"/>
+              </svg>
+              <span>Flip Camera</span>
+            </button>
+          </div>
+
+          <div id="cameraErrorBanner" class="system-error-card" style="display: none;"></div>
+        </div>
+
+        <!-- File Upload Interface -->
+        <div id="fileUploadSection" class="upload-hub" style="display: none;">
+          <div
+            id="dropZone"
+            class="drop-target-area"
+            ondragover="event.preventDefault()"
+            ondrop="handleDrop(event)"
+          >
+            <div class="drop-icon-container">
+              <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
+                <path d="M12 12v9"/>
+                <path d="m16 16-4-4-4 4"/>
+              </svg>
+            </div>
+            <div class="drop-messaging">
+              <p class="drop-primary">Drag & drop QR image file</p>
+              <p class="drop-secondary">Supports PNG, JPG, WebP, or GIF (max 10MB)</p>
+            </div>
+            <label class="action-secondary-btn" for="qrFileInput">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="12" y1="18" x2="12" y2="12"/>
+                <line x1="9" y1="15" x2="15" y2="15"/>
+              </svg>
+              <span>Browse Local File</span>
+            </label>
+            <input type="file" id="qrFileInput" accept="image/*" style="display:none;" />
+          </div>
+
+          <!-- QR File Preview Card -->
+          <div id="qrPreview" class="preview-hub" style="display:none;">
+            <div class="preview-card">
+              <div class="preview-thumbnail">
+                <img id="qrPreviewImg" alt="QR Preview" />
+              </div>
+              <div class="preview-details">
+                <div class="preview-filename" id="previewFileName">qrcode_sample.png</div>
+                <div class="preview-meta" id="previewFileMeta">Image · 48.2 KB</div>
+                <div class="preview-actions">
+                  <button id="qrScanBtn" class="analyze-btn" type="button">
+                    <span class="btn-text">
+                      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                      </svg>
+                      Extract & Scan Payload
+                    </span>
+                    <span class="btn-spinner" style="display:none;" aria-hidden="true"></span>
+                  </button>
+                  <button id="qrResetBtn" class="action-ghost-btn" type="button">
+                    <span>Remove</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- ── Results Panel ──────────────────────────── -->
-    <div id="resultPanel" class="result-panel" style="display:none;">
+    <!-- ── Panel: Session Audit Log ──────────────────── -->
+    <div id="tab-history" class="panel-section" role="tabpanel">
+      <div class="command-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-label">Session Threat Audit Log</span>
+            <span class="card-caption">All targets inspected during this browser session</span>
+          </div>
+          <button type="button" class="action-ghost-btn danger" id="clearHistoryBtn">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+            <span>Clear Log</span>
+          </button>
+        </div>
 
-      <!-- Verdict Header -->
-      <div id="verdictHeader" class="verdict-header">
-        <div class="verdict-icon" id="verdictIcon">🛡️</div>
-        <div class="verdict-info">
-          <div id="verdictLabel" class="verdict-label">–</div>
-          <div id="scannedUrl" class="scanned-url"></div>
+        <div id="historyTableContainer" class="history-container">
+          <!-- Dynamically populated via JS -->
+          <div class="history-empty" id="historyEmptyState">
+            <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <p class="empty-title">No Scans Performed Yet</p>
+            <p class="empty-subtitle">Run a URL scan or QR payload check to record threat intelligence telemetry here.</p>
+          </div>
+
+          <div id="historyList" class="history-list" style="display:none;"></div>
         </div>
       </div>
-
-      <!-- Trust Score -->
-      <div class="trust-section">
-        <div class="trust-header">
-          <span class="trust-title">Trust Score</span>
-          <span id="trustScoreNum" class="trust-score-num">–</span>
-        </div>
-        <div class="trust-track">
-          <div id="trustFill" class="trust-fill"></div>
-        </div>
-        <div class="trust-labels">
-          <span>Dangerous</span>
-          <span>Safe</span>
-        </div>
-      </div>
-
-      <!-- Risk Factors + Feature Grid -->
-      <div class="details-grid">
-        <div id="riskFactorsCard" class="detail-card" style="display:none;">
-          <h3 class="detail-title">⚠️ Risk Factors</h3>
-          <ul id="riskFactorsList" class="risk-list"></ul>
-        </div>
-        <div class="detail-card">
-          <h3 class="detail-title">🔬 URL Features</h3>
-          <div id="featuresGrid" class="features-grid"></div>
-        </div>
-      </div>
-
     </div>
 
-    <!-- ── Error Banner ───────────────────────────── -->
-    <div id="errorBanner" class="error-banner" style="display:none;"></div>
+    <!-- ── Executive Threat Intelligence Report ──────── -->
+    <section id="resultPanel" class="results-report-card" style="display:none;" aria-live="polite">
+      
+      <!-- Verdict Top Bar -->
+      <div id="verdictHeader" class="verdict-banner safe">
+        <div class="verdict-status-icon" id="verdictIconContainer">
+          <!-- Dynamically inserted SVG icon -->
+        </div>
+        
+        <div class="verdict-content">
+          <div class="verdict-classification" id="verdictClassificationTag">Security Triage</div>
+          <h2 id="verdictLabel" class="verdict-title">SAFE / BENIGN</h2>
+          
+          <div class="target-url-row">
+            <div class="url-badge">
+              <svg class="url-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+              </svg>
+              <span id="scannedUrl" class="scanned-url-text">https://example.com</span>
+            </div>
+
+            <div class="url-actions">
+              <button type="button" class="action-icon-btn" id="copyUrlBtn" title="Copy URL to clipboard">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+              </button>
+              <a href="#" id="openExternalSandboxLink" target="_blank" rel="noopener noreferrer" class="action-icon-btn" title="Open in sandbox tab">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                  <polyline points="15 3 21 3 21 9"/>
+                  <line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="verdict-confidence-box">
+          <span class="confidence-label">Confidence Index</span>
+          <span class="confidence-value" id="confidenceValue">–</span>
+        </div>
+      </div>
+
+      <!-- Trust Score Metric Section -->
+      <div class="trust-metric-section">
+        <div class="trust-metric-header">
+          <div class="trust-title-group">
+            <span class="trust-title">Calculated Trust Score</span>
+            <span class="trust-subtitle" id="trustScoreExplanation">Higher scores indicate verified safe domains with low anomaly density.</span>
+          </div>
+          <div class="trust-numerical">
+            <span id="trustScoreNum" class="score-figure">--</span>
+            <span class="score-pct">%</span>
+          </div>
+        </div>
+
+        <!-- Segmented Spectrum Gauge -->
+        <div class="spectrum-bar-track">
+          <div id="trustFill" class="spectrum-fill safe" style="width: 0%;"></div>
+        </div>
+
+        <div class="spectrum-markers">
+          <div class="marker-item danger">
+            <span class="marker-dot"></span>
+            <span>0 – 39% Malicious</span>
+          </div>
+          <div class="marker-item warning">
+            <span class="marker-dot"></span>
+            <span>40 – 69% Suspicious</span>
+          </div>
+          <div class="marker-item safe">
+            <span class="marker-dot"></span>
+            <span>70 – 100% Trusted</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Structured Threat Analysis & Risk Breakdown -->
+      <div class="threat-breakdown-grid">
+
+        <!-- Risk Factors (Critical alerts) -->
+        <div id="riskFactorsCard" class="report-box" style="display:none;">
+          <div class="box-header">
+            <svg class="box-icon danger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <h3 class="box-heading">Detected Risk Factors</h3>
+          </div>
+          <ul id="riskFactorsList" class="threat-signals-list"></ul>
+        </div>
+
+        <!-- Categorized Heuristic Feature Diagnostics -->
+        <div class="report-box full-width">
+          <div class="box-header">
+            <svg class="box-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            <div class="box-header-text">
+              <h3 class="box-heading">25-Vector Heuristic Feature Diagnostics</h3>
+              <p class="box-subheading">Structural properties extracted and evaluated by the Random Forest classifier</p>
+            </div>
+          </div>
+
+          <div class="diagnostics-matrix" id="diagnosticsMatrix">
+            <!-- Dynamically populated via JS with Domain, Transport, and Obfuscation categories -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Report Actions Utility Bar -->
+      <div class="report-utility-bar">
+        <div class="utility-left">
+          <span class="utility-caption">Investigation Utilities:</span>
+        </div>
+        <div class="utility-actions">
+          <button type="button" class="action-secondary-btn" id="copyReportSummaryBtn">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            <span>Copy Incident Summary</span>
+          </button>
+          
+          <button type="button" class="action-ghost-btn" id="exportJsonBtn">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="16 18 22 12 16 6"/>
+              <polyline points="8 6 2 12 8 18"/>
+            </svg>
+            <span>Export JSON</span>
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── System Error Banner ───────────────────────── -->
+    <div id="errorBanner" class="system-error-card" style="display:none;" role="alert">
+      <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <div class="alert-text" id="errorMessageText">An unexpected scan error occurred.</div>
+    </div>
+
+    <!-- ── Detection Architecture Information ───────── -->
+    <section class="intel-overview-card">
+      <div class="intel-header">
+        <div class="intel-badge">Detection Pipeline</div>
+        <h2 class="intel-title">How SentiGuard Detects Zero-Day Phishing</h2>
+        <p class="intel-desc">
+          Unlike static blocklists that lag behind newly registered malicious domains, SentiGuard extracts 25 deep lexical, transport, and structural features from raw URLs and evaluates them through an ensemble Random Forest model trained on verified threat feeds.
+        </p>
+      </div>
+
+      <div class="intel-columns">
+        <div class="intel-col">
+          <div class="col-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+          </div>
+          <h3 class="col-title">Lexical & Entropy Analysis</h3>
+          <p class="col-text">Evaluates domain length, character entropy, hyphen count, and subdomain nesting depth to identify algorithmically generated domains (DGA) and brand impersonation.</p>
+        </div>
+
+        <div class="intel-col">
+          <div class="col-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+            </svg>
+          </div>
+          <h3 class="col-title">Obfuscation Heuristics</h3>
+          <p class="col-text">Uncovers evasion tricks such as hex-encoded IP addresses, userinfo credential redirect tokens (<code>@</code>), double slashes in paths, and high-risk free TLDs.</p>
+        </div>
+
+        <div class="intel-col">
+          <div class="col-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polygon points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <h3 class="col-title">Real-Time Mobile QR Engine</h3>
+          <p class="col-text">Extracts encoded QR payloads directly in the browser via WebRTC camera streams or uploaded raster assets, protecting mobile users from malicious redirects before browser resolution.</p>
+        </div>
+      </div>
+    </section>
 
   </main>
 
-  <!-- ── Footer ──────────────────────────────────── -->
+  <!-- ── Footer ───────────────────────────────────────── -->
   <footer class="footer">
-    <p>SentiGuard v1.0 &nbsp;·&nbsp; AI-powered phishing detection &nbsp;·&nbsp;
-      <a href="/docs" target="_blank" rel="noreferrer">API Docs</a>
-    </p>
+    <div class="footer-container">
+      <div class="footer-left">
+        <span class="footer-brand">SentiGuard</span>
+        <span class="footer-sep">·</span>
+        <span class="footer-copy">Autonomous Phishing & Threat Intelligence Engine</span>
+      </div>
+
+      <div class="footer-right">
+        <a href="/docs" target="_blank" rel="noreferrer" class="footer-link">API Swagger</a>
+        <a href="/redoc" target="_blank" rel="noreferrer" class="footer-link">ReDoc</a>
+        <a href="https://github.com/geekytan/SentiGuard" target="_blank" rel="noreferrer" class="footer-link">GitHub Repository</a>
+      </div>
+    </div>
   </footer>
 
-  <script src="js/app.js?v=6"></script>
-  <script src="js/qr-scanner.js?v=6"></script>
+  <!-- Notification Toast -->
+  <div id="toastNotification" class="toast-card" style="display:none;" aria-live="polite">
+    <span id="toastMessage">Copied to clipboard</span>
+  </div>
+
+  <script src="js/app.js?v=7"></script>
+  <script src="js/qr-scanner.js?v=7"></script>
   
   <!-- Service Worker Registration -->
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", async () => {
         try {
-          const registration = await navigator.serviceWorker.register("sw.js?v=6");
-          console.log("[PWA] Service Worker registered:", registration);
+          const registration = await navigator.serviceWorker.register("sw.js?v=7");
+          console.log("[PWA] Service Worker v7 registered:", registration);
 
+          let hasController = !!navigator.serviceWorker.controller;
           let hasRefreshed = false;
           navigator.serviceWorker.addEventListener("controllerchange", () => {
-            // Prevent multiple reloads if the browser fires controllerchange more than once.
             if (hasRefreshed) return;
+            if (!hasController) { hasController = true; return; }
             hasRefreshed = true;
             window.location.reload();
           });
