@@ -28,3 +28,6 @@ Thumbs.db
 
 # Node (if any)
 node_modules/
+
+# Local tools
+.freebuff/

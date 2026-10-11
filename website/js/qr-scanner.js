@@ -1,325 +1,211 @@
 /**
- * SentiGuard - Mobile QR Scanner Module
- * Uses Camera API for real-time QR code detection
- * Falls back to file upload on unsupported devices
+ * SentiGuard — Optical QR Payload Detection Engine
+ * High-performance WebRTC Camera scanner with optical HUD reticle
+ * and hardware video frame decoding via jsQR.
  */
+
+"use strict";
 
 class MobileQRScanner {
   constructor() {
-    this.video = null;
-    this.canvas = null;
+    this.video = document.getElementById("qrVideo");
+    this.canvas = document.getElementById("qrCanvas");
+    this.startBtn = document.getElementById("startScanBtn");
+    this.stopBtn = document.getElementById("stopScanBtn");
+    this.flipBtn = document.getElementById("switchCameraDirectionBtn");
+    this.statusText = document.getElementById("cameraStatusText");
+    this.errorBanner = document.getElementById("cameraErrorBanner");
+
     this.isScanning = false;
     this.stream = null;
-    this.scannerActive = false;
+    this.animationId = null;
+    this.facingMode = "environment"; // default to rear camera on mobile
+    this.availableCameras = [];
+
+    this.bindEvents();
   }
 
-  /**
-   * Check if camera is available or likely supported
-   */
   static async isCameraAvailable() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       return false;
     }
+    return true;
+  }
 
-    if (!navigator.mediaDevices.enumerateDevices) {
-      return true;
+  bindEvents() {
+    if (this.startBtn) {
+      this.startBtn.addEventListener("click", () => this.startScanning());
     }
+    if (this.stopBtn) {
+      this.stopBtn.addEventListener("click", () => this.stopScanning());
+    }
+    if (this.flipBtn) {
+      this.flipBtn.addEventListener("click", () => this.toggleFacingMode());
+    }
+  }
 
+  async checkMultipleCameras() {
     try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      return devices.some((device) => device.kind === "videoinput");
-    } catch (err) {
-      console.warn("[QRScanner] Camera check failed:", err);
-      // Some mobile browsers block enumerateDevices on insecure pages.
-      // If getUserMedia exists, allow camera mode and show any errors later.
-      return true;
+      if (navigator.mediaDevices.enumerateDevices) {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        this.availableCameras = devices.filter(d => d.kind === "videoinput");
+        if (this.availableCameras.length > 1 && this.flipBtn) {
+          this.flipBtn.style.display = "inline-flex";
+        }
+      }
+    } catch (e) {
+      console.warn("[QRScanner] Device enumeration not allowed", e);
     }
   }
 
-  /**
-   * Initialize camera scanning UI
-   */
-  async initCameraMode() {
-    const qrPanel = document.getElementById("tab-qr");
-    const dropZone = document.getElementById("dropZone");
-    const cameraLabel = qrPanel.querySelector(".input-label");
-
-    // Create camera scanner HTML
-    const cameraUI = document.createElement("div");
-    cameraUI.className = "camera-scanner-container";
-    cameraUI.id = "cameraScannerUI";
-    cameraUI.innerHTML = `
-      <div class="camera-header">
-        <div class="camera-title">
-          <span class="camera-icon">📷</span>
-          <div>
-            <div class="camera-title-text">Camera Scanner</div>
-            <div class="camera-subtitle">Scan a QR code directly with your phone camera</div>
-          </div>
-        </div>
-        <button id="toggleCameraMode" class="toggle-mode-btn">
-          📁 Upload instead
-        </button>
-      </div>
-
-      <div class="camera-wrapper">
-        <video id="qrVideo" class="qr-video" playsinline autoplay muted></video>
-        <canvas id="qrCanvas" style="display: none;"></canvas>
-        <div class="camera-overlay">
-          <div class="scan-frame"></div>
-          <p class="scan-status">Point camera at QR code</p>
-        </div>
-      </div>
-
-      <div id="scannerControls" class="scanner-controls">
-        <button id="startScanBtn" class="scan-btn">
-          <span class="btn-text">Start Scanner</span>
-        </button>
-        <button id="stopScanBtn" class="scan-btn secondary" style="display: none;">
-          <span class="btn-text">Stop Scanner</span>
-        </button>
-      </div>
-
-      <div id="cameraError" class="error-banner" style="display: none;"></div>
-
-      <div class="scanner-info">
-        <p>💡 <strong>Tip:</strong> Ensure good lighting and hold the phone steady</p>
-      </div>
-    `;
-
-    // Insert before drop zone
-    dropZone.parentNode.insertBefore(cameraUI, dropZone);
-    dropZone.style.display = "none";
-
-    if (cameraLabel) {
-      cameraLabel.textContent = "Scan QR Code with Camera";
-    }
-
-    // Setup event listeners
-    document.getElementById("startScanBtn").addEventListener("click", () =>
-      this.startScanning()
-    );
-    document.getElementById("stopScanBtn").addEventListener("click", () =>
-      this.stopScanning()
-    );
-    document.getElementById("toggleCameraMode").addEventListener("click", () =>
-      this.toggleUploadMode()
-    );
-
-    // Store references
-    this.video = document.getElementById("qrVideo");
-    this.canvas = document.getElementById("qrCanvas");
-  }
-
-  /**
-   * Start camera and begin scanning
-   */
   async startScanning() {
     try {
-      const startBtn = document.getElementById("startScanBtn");
-      const stopBtn = document.getElementById("stopScanBtn");
-      const errorDiv = document.getElementById("cameraError");
+      this.hideError();
+      this.startBtn.disabled = true;
+      this.updateStatus("Requesting optical video stream access...");
 
-      startBtn.disabled = true;
-
-      // Request camera access
-      this.stream = await navigator.mediaDevices.getUserMedia({
+      const constraints = {
         video: {
-          facingMode: "environment",
+          facingMode: { ideal: this.facingMode },
           width: { ideal: 1280 },
           height: { ideal: 720 },
         },
         audio: false,
-      });
+      };
 
+      this.stream = await navigator.mediaDevices.getUserMedia(constraints);
       this.video.srcObject = this.stream;
-      this.scannerActive = true;
       this.isScanning = true;
 
-      startBtn.style.display = "none";
-      stopBtn.style.display = "inline-block";
-      errorDiv.style.display = "none";
+      this.startBtn.style.display = "none";
+      this.stopBtn.style.display = "inline-flex";
+      this.startBtn.disabled = false;
 
-      const status = document.querySelector(".scan-status");
-      if (status) status.textContent = "Scanning for a QR code…";
+      this.updateStatus("Targeting QR matrix · Hold frame steady");
 
-      console.log("[QRScanner] Camera started");
+      await this.video.play().catch(err => {
+        console.warn("[QRScanner] Autoplay rejected, continuing:", err);
+      });
 
-      try {
-        await this.video.play();
-      } catch (playError) {
-        console.warn("[QRScanner] video.play() failed:", playError);
-      }
-
-      // Begin scanning loop
+      await this.checkMultipleCameras();
       this.scanFrame();
+
     } catch (err) {
-      const errorDiv = document.getElementById("cameraError");
-      const startBtn = document.getElementById("startScanBtn");
+      this.startBtn.disabled = false;
+      this.stopScanning();
 
-      if (err.name === "NotAllowedError") {
-        errorDiv.textContent = "📷 Camera permission denied. Please enable it.";
-      } else if (err.name === "NotFoundError") {
-        errorDiv.textContent = "❌ No camera found on this device.";
-      } else if (err.name === "SecurityError" || err.name === "NotAllowedError") {
-        errorDiv.textContent = "🔒 Camera blocked by browser security. Use HTTPS or a secure tunnel to enable camera scanning.";
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        this.showError("Camera permissions denied by browser. Grant camera access to enable optical scanning.");
+      } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+        this.showError("No video input devices found on this system. Switch to File Upload mode.");
+      } else if (err.name === "SecurityError") {
+        this.showError("Camera streams require a secure HTTPS context or localhost connection.");
       } else {
-        errorDiv.textContent = `❌ Camera error: ${err.message}`;
+        this.showError(`Optical hardware error: ${err.message}`);
       }
-
-      errorDiv.style.display = "block";
-      startBtn.disabled = false;
-      console.error("[QRScanner] Error:", err);
     }
   }
 
-  /**
-   * Stop camera and scanning
-   */
   stopScanning() {
     if (this.stream) {
-      this.stream.getTracks().forEach((track) => track.stop());
+      this.stream.getTracks().forEach(track => track.stop());
       this.stream = null;
     }
 
+    if (this.animationId) {
+      cancelAnimationFrame(this.animationId);
+      this.animationId = null;
+    }
+
     this.isScanning = false;
-    this.scannerActive = false;
 
-    document.getElementById("startScanBtn").style.display = "inline-block";
-    document.getElementById("stopScanBtn").style.display = "none";
-    document.getElementById("startScanBtn").disabled = false;
+    if (this.startBtn) {
+      this.startBtn.style.display = "inline-flex";
+      this.startBtn.disabled = false;
+    }
+    if (this.stopBtn) {
+      this.stopBtn.style.display = "none";
+    }
 
-    const status = document.querySelector(".scan-status");
-    if (status) status.textContent = "Point camera at QR code";
-
-    console.log("[QRScanner] Camera stopped");
+    this.updateStatus("Standby · Click Start to initialize camera");
   }
 
-  /**
-   * Main scanning loop - capture frames and decode QR
-   */
+  async toggleFacingMode() {
+    this.facingMode = this.facingMode === "environment" ? "user" : "environment";
+    if (this.isScanning) {
+      this.stopScanning();
+      await this.startScanning();
+    }
+  }
+
   scanFrame() {
-    const status = document.querySelector(".scan-status");
+    if (!this.isScanning) return;
 
-    if (!this.isScanning || this.video.readyState < this.video.HAVE_FUTURE_DATA) {
-      if (status) status.textContent = "Waiting for camera feed…";
-      requestAnimationFrame(() => this.scanFrame());
-      return;
-    }
-
-    if (!window.jsQR) {
-      const errorDiv = document.getElementById("cameraError");
-      if (errorDiv) {
-        errorDiv.textContent = "❌ QR decoder library not loaded. Refresh the page and try again.";
-        errorDiv.style.display = "block";
-      }
-      console.error("[QRScanner] jsQR is not available");
-      return;
-    }
-
-    try {
-      // Draw video frame to canvas
-      const context = this.canvas.getContext("2d");
-      this.canvas.width = this.video.videoWidth || 640;
-      this.canvas.height = this.video.videoHeight || 480;
-      context.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
-
-      if (this.canvas.width === 0 || this.canvas.height === 0) {
-        if (status) status.textContent = "Waiting for camera frame...";
-        requestAnimationFrame(() => this.scanFrame());
-        return;
-      }
-
-      // Extract image data
-      const imageData = context.getImageData(
-        0,
-        0,
-        this.canvas.width,
-        this.canvas.height
-      );
-
-      if (status) status.textContent = "Scanning the frame...";
-
-      // Attempt QR decode using jsQR library (loaded externally)
-      const code = window.jsQR(imageData.data, imageData.width, imageData.height);
-      if (code) {
-        if (status) status.textContent = "QR code found! Processing...";
-        console.log("[QRScanner] QR Code detected:", code.data);
-        this.handleQRDetected(code.data);
+    if (this.video.readyState >= this.video.HAVE_CURRENT_DATA) {
+      if (!window.jsQR) {
+        this.showError("Client-side jsQR library failed to initialize.");
         this.stopScanning();
         return;
       }
 
-      if (status) status.textContent = "Still scanning... hold steady";
-    } catch (err) {
-      console.error("[QRScanner] Frame processing error:", err);
-      if (status) status.textContent = "Frame processing error. Try again.";
+      const canvasCtx = this.canvas.getContext("2d", { willReadFrequently: true });
+      this.canvas.width = this.video.videoWidth || 640;
+      this.canvas.height = this.video.videoHeight || 480;
+
+      if (this.canvas.width > 0 && this.canvas.height > 0) {
+        canvasCtx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+        const imgData = canvasCtx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+        const code = window.jsQR(imgData.data, imgData.width, imgData.height);
+
+        if (code && code.data) {
+          this.updateStatus("QR payload acquired! Analyzing threat vectors...");
+          const payload = code.data.trim();
+          this.stopScanning();
+          this.handlePayload(payload);
+          return;
+        }
+      }
     }
 
-    // Continue scanning
-    requestAnimationFrame(() => this.scanFrame());
+    this.animationId = requestAnimationFrame(() => this.scanFrame());
   }
 
-  /**
-   * Handle detected QR code
-   */
-  async handleQRDetected(qrData) {
-    console.log("[QRScanner] Processing QR data:", qrData);
-
-    try {
-      // If it's a URL, scan it
-      if (qrData.startsWith("http://") || qrData.startsWith("https://")) {
-        await scanURL(qrData);
-      } else {
-        // Treat as raw QR data - could be custom format
-        showResult({
-          url: qrData,
-          verdict: "UNKNOWN",
-          trust_score: 50,
-          risk_factors: ["QR code content is not a standard URL"],
-          features: {},
-        });
-      }
-    } catch (err) {
-      showError(`Failed to process QR content: ${err.message}`);
+  async handlePayload(payload) {
+    if (typeof scanURL === "function") {
+      scanURL(payload);
     }
   }
 
-  /**
-   * Toggle between camera and upload mode
-   */
-  toggleUploadMode() {
-    const cameraScannerUI = document.getElementById("cameraScannerUI");
-    const dropZone = document.getElementById("dropZone");
-    const cameraLabel = document.getElementById("tab-qr").querySelector(".input-label");
+  updateStatus(msg) {
+    if (this.statusText) {
+      this.statusText.textContent = msg;
+    }
+  }
 
-    if (dropZone.style.display === "none") {
-      this.stopScanning();
-      cameraScannerUI.style.display = "none";
-      dropZone.style.display = "block";
-      if (cameraLabel) {
-        cameraLabel.textContent = "Upload QR Code Image";
-      }
-    } else {
-      cameraScannerUI.style.display = "block";
-      dropZone.style.display = "none";
-      if (cameraLabel) {
-        cameraLabel.textContent = "Scan QR Code with Camera";
-      }
+  showError(msg) {
+    if (this.errorBanner) {
+      this.errorBanner.textContent = msg;
+      this.errorBanner.style.display = "flex";
+    }
+  }
+
+  hideError() {
+    if (this.errorBanner) {
+      this.errorBanner.style.display = "none";
     }
   }
 }
 
-// Initialize after DOM is ready
+// Global initialization
 document.addEventListener("DOMContentLoaded", async () => {
-  const hasCameraSupport = await MobileQRScanner.isCameraAvailable();
-
-  if (hasCameraSupport) {
-    console.log("[QRScanner] Camera support detected");
-    const scanner = new MobileQRScanner();
-    scanner.initCameraMode();
-    window.qrScanner = scanner; // Global reference
+  const hasSupport = await MobileQRScanner.isCameraAvailable();
+  if (hasSupport) {
+    window.qrScanner = new MobileQRScanner();
   } else {
-    console.log("[QRScanner] No camera support, using file upload only");
+    const startBtn = document.getElementById("startScanBtn");
+    if (startBtn) {
+      startBtn.disabled = true;
+      startBtn.title = "Camera streaming unavailable in current environment";
+    }
   }
 });
