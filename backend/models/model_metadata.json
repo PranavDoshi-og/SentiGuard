@@ -1,7 +1,7 @@
 {
   "model_type": "RandomForest",
   "version": "2.0.0",
-  "trained_at": "2026-10-11T19:22:11.665671+00:00",
+  "trained_at": "2026-10-11T20:34:04.494951+00:00",
   "total_samples": 12000,
   "feature_count": 36,
   "feature_names": [
@@ -48,15 +48,15 @@
       "f1": 1.0,
       "roc_auc": 1.0,
       "cv_f1_mean": 1.0,
-      "train_time_sec": 0.29,
-      "infer_latency_ms": 0.034
+      "train_time_sec": 0.27,
+      "infer_latency_ms": 0.033
     },
     "LightGBM": {
       "accuracy": 1.0,
       "f1": 1.0,
       "roc_auc": 1.0,
       "cv_f1_mean": 1.0,
-      "train_time_sec": 0.42,
+      "train_time_sec": 0.33,
       "infer_latency_ms": 0.005
     }
   },
@@ -65,49 +65,49 @@
     "f1": 1.0,
     "roc_auc": 1.0,
     "cv_f1_mean": 1.0,
-    "train_time_sec": 0.29,
-    "infer_latency_ms": 0.034
+    "train_time_sec": 0.27,
+    "infer_latency_ms": 0.033
   },
   "top_shap_features": [
     {
-      "feature": "is_trusted_domain",
-      "shap_importance": 0.1015
-    },
-    {
       "feature": "has_https",
-      "shap_importance": 0.0822
+      "shap_importance": 0.0908
     },
     {
       "feature": "has_http",
-      "shap_importance": 0.0773
+      "shap_importance": 0.0894
     },
     {
       "feature": "time_to_expiry_days",
-      "shap_importance": 0.0569
+      "shap_importance": 0.0713
     },
     {
-      "feature": "has_dns_mx_record",
-      "shap_importance": 0.0405
-    },
-    {
-      "feature": "num_hyphens",
-      "shap_importance": 0.0401
+      "feature": "is_trusted_domain",
+      "shap_importance": 0.0639
     },
     {
       "feature": "domain_age_days",
-      "shap_importance": 0.0363
+      "shap_importance": 0.0437
+    },
+    {
+      "feature": "has_dns_mx_record",
+      "shap_importance": 0.0434
     },
     {
       "feature": "domain_length",
-      "shap_importance": 0.0275
+      "shap_importance": 0.033
     },
     {
-      "feature": "has_login_keyword",
-      "shap_importance": 0.0182
+      "feature": "num_hyphens",
+      "shap_importance": 0.0268
     },
     {
       "feature": "has_suspicious_tld",
-      "shap_importance": 0.0124
+      "shap_importance": 0.0192
+    },
+    {
+      "feature": "has_brand_spoofing",
+      "shap_importance": 0.0127
     }
   ]
 }

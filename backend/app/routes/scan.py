@@ -59,7 +59,7 @@ async def scan_url(request: URLScanRequest):
 
     try:
         result = scan_service.scan_url(url)
-        logger.info(f"Scanned URL: {url} → {result['verdict']} (trust={result['trust_score']})")
+        logger.info(f"Scanned URL: {url} -> {result['verdict']} (trust={result['trust_score']})")
         return result
     except Exception as e:
         logger.error(f"Error scanning URL '{url}': {e}")
@@ -92,7 +92,7 @@ async def scan_qr(file: UploadFile = File(...)):
 
         result = scan_service.scan_url(extracted_url)
         result["qr_extracted_url"] = extracted_url
-        logger.info(f"QR Scan: extracted={extracted_url} → {result['verdict']}")
+        logger.info(f"QR Scan: extracted={extracted_url} -> {result['verdict']}")
         return result
 
     except HTTPException:

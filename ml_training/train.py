@@ -229,6 +229,19 @@ def generate_enterprise_corpus(n_samples: int = 12000) -> pd.DataFrame:
         "https://www.shopify.com/",
         "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
         "https://www.reddit.com/r/MachineLearning/",
+        # Modern AI, Developer & SaaS platforms (including login queries)
+        "https://www.perplexity.ai/?login-source=oneTapHome&login-new=false",
+        "https://chatgpt.com/auth/login?sso=true",
+        "https://huggingface.co/login?next=%2Fmodels",
+        "https://dashboard.stripe.com/login?redirect=%2Fbalance",
+        "https://dash.cloudflare.com/login?lang=en-us",
+        "https://auth.openai.com/u/login",
+        "https://news.ycombinator.com/login?goto=news",
+        "https://gitlab.com/users/sign_in",
+        "https://vercel.com/login?next=%2Fdashboard",
+        "https://supabase.com/dashboard/sign-in",
+        "https://medium.com/m/signin?actionUrl=https%3A%2F%2Fmedium.com%2F",
+        "https://substack.com/sign-in?redirect=%2F",
     ]
 
     rows = []

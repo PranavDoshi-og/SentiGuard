@@ -38,6 +38,8 @@ TRUSTED_DOMAINS = {
     "wikipedia.org", "python.org", "mozilla.org", "adobe.com",
     "salesforce.com", "zoom.us", "slack.com", "shopify.com",
     "spotify.com", "nytimes.com", "stackoverflow.com",
+    "perplexity.ai", "openai.com", "anthropic.com", "chatgpt.com",
+    "cloudflare.com", "stripe.com", "vercel.com", "huggingface.co",
 }
 
 # Major brands frequently targeted by deceptive typosquatting / spoofing
@@ -141,7 +143,11 @@ def get_dns_records(domain: str, timeout: float = 1.0) -> dict[str, Any]:
                 records["has_dns_a_record"] = 0.0
 
         try:
-            mx_answers = resolver.resolve(domain, "MX")
+            try:
+                mx_answers = resolver.resolve(domain, "MX")
+            except Exception:
+                registrable = _get_registrable_domain(domain)
+                mx_answers = resolver.resolve(registrable, "MX")
             records["has_dns_mx_record"] = 1.0 if len(mx_answers) > 0 else 0.0
         except Exception:
             records["has_dns_mx_record"] = 0.0
