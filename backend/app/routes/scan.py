@@ -24,10 +24,11 @@ scan_service = ScanService()
 class URLScanRequest(BaseModel):
     url: str
 
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {"url": "https://example.com/login?id=12345"}
         }
+    }
 
 
 class ScanResponse(BaseModel):

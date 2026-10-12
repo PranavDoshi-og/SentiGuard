@@ -3,13 +3,13 @@
  * Enables PWA features: offline support, caching, background sync
  */
 
-const CACHE_NAME = "sentiguard-v7";
+const CACHE_NAME = "sentiguard-v8";
 const URLS_TO_CACHE = [
   "/",
   "/index.html",
-  "/css/style.css?v=7",
-  "/js/app.js?v=7",
-  "/js/qr-scanner.js?v=7",
+  "/css/style.css?v=8",
+  "/js/app.js?v=8",
+  "/js/qr-scanner.js?v=8",
   "/assets/icon48.png",
   "/assets/icon96.png",
   "/assets/icon192.png",
@@ -59,12 +59,18 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // API calls: network first
+  // API calls
   if (request.url.includes("/api/")) {
+    // POST/PUT/DELETE requests cannot be cached in CacheStorage
+    if (request.method !== "GET") {
+      event.respondWith(fetch(request));
+      return;
+    }
+
     event.respondWith(
       fetch(request)
         .then((response) => {
-          // Cache successful API responses
+          // Cache successful GET API responses
           if (response.status === 200) {
             const cache_copy = response.clone();
             caches.open(CACHE_NAME).then((cache) => {

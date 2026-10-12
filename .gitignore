@@ -12,8 +12,9 @@ env/
 dist/
 build/
 
-# ML Models (large binary files)
+# ML Models (whitelist compact production model)
 backend/models/*.pkl
+!backend/models/phishing_model.pkl
 backend/models/*.joblib
 
 # Logs

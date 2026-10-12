@@ -14,7 +14,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="assets/icon48.png" />
   <link rel="apple-touch-icon" href="assets/icon192.png" />
-  <link rel="stylesheet" href="css/style.css?v=7" />
+  <link rel="stylesheet" href="css/style.css?v=8" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -588,15 +588,15 @@
     <span id="toastMessage">Copied to clipboard</span>
   </div>
 
-  <script src="js/app.js?v=7"></script>
-  <script src="js/qr-scanner.js?v=7"></script>
+  <script src="js/app.js?v=8"></script>
+  <script src="js/qr-scanner.js?v=8"></script>
   
   <!-- Service Worker Registration -->
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", async () => {
         try {
-          const registration = await navigator.serviceWorker.register("sw.js?v=7");
+          const registration = await navigator.serviceWorker.register("sw.js?v=8");
           console.log("[PWA] Service Worker v7 registered:", registration);
 
           let hasController = !!navigator.serviceWorker.controller;

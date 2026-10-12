@@ -22,7 +22,9 @@ except Exception:
 
 # Add backend to path for predictor
 sys.path.insert(0, str(Path(__file__).parent / "backend"))
+# pyrefly: ignore [missing-import]
 from app.ml.predictor import PhishingPredictor
+# pyrefly: ignore [missing-import]
 from app.ml.feature_extractor import extract_features
 
 
