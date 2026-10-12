@@ -1,0 +1,113 @@
+{
+  "model_type": "RandomForest",
+  "version": "2.0.0",
+  "trained_at": "2026-10-11T20:34:04.494951+00:00",
+  "total_samples": 12000,
+  "feature_count": 36,
+  "feature_names": [
+    "url_length",
+    "domain_length",
+    "path_length",
+    "has_https",
+    "has_http",
+    "num_dots",
+    "subdomain_count",
+    "has_ip_address",
+    "has_suspicious_tld",
+    "is_trusted_domain",
+    "is_url_shortener",
+    "has_brand_spoofing",
+    "has_digit_substitution",
+    "has_at_symbol",
+    "has_double_slash",
+    "num_hyphens",
+    "has_underscore",
+    "num_digits_in_domain",
+    "has_hex_encoding",
+    "has_unicode_escape",
+    "num_encoded_chars",
+    "num_params",
+    "query_length",
+    "has_login_keyword",
+    "has_bank_keyword",
+    "has_free_keyword",
+    "path_depth",
+    "has_exe_extension",
+    "domain_age_days",
+    "time_to_expiry_days",
+    "has_dns_a_record",
+    "has_dns_mx_record",
+    "dns_resolved_ips_count",
+    "has_valid_ssl",
+    "ssl_days_to_expiry",
+    "is_free_ssl_issuer"
+  ],
+  "benchmark_summary": {
+    "RandomForest": {
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0,
+      "cv_f1_mean": 1.0,
+      "train_time_sec": 0.27,
+      "infer_latency_ms": 0.033
+    },
+    "LightGBM": {
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0,
+      "cv_f1_mean": 1.0,
+      "train_time_sec": 0.33,
+      "infer_latency_ms": 0.005
+    }
+  },
+  "selected_metrics": {
+    "accuracy": 1.0,
+    "f1": 1.0,
+    "roc_auc": 1.0,
+    "cv_f1_mean": 1.0,
+    "train_time_sec": 0.27,
+    "infer_latency_ms": 0.033
+  },
+  "top_shap_features": [
+    {
+      "feature": "has_https",
+      "shap_importance": 0.0908
+    },
+    {
+      "feature": "has_http",
+      "shap_importance": 0.0894
+    },
+    {
+      "feature": "time_to_expiry_days",
+      "shap_importance": 0.0713
+    },
+    {
+      "feature": "is_trusted_domain",
+      "shap_importance": 0.0639
+    },
+    {
+      "feature": "domain_age_days",
+      "shap_importance": 0.0437
+    },
+    {
+      "feature": "has_dns_mx_record",
+      "shap_importance": 0.0434
+    },
+    {
+      "feature": "domain_length",
+      "shap_importance": 0.033
+    },
+    {
+      "feature": "num_hyphens",
+      "shap_importance": 0.0268
+    },
+    {
+      "feature": "has_suspicious_tld",
+      "shap_importance": 0.0192
+    },
+    {
+      "feature": "has_brand_spoofing",
+      "shap_importance": 0.0127
+    }
+  ]
+}
