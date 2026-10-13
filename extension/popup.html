@@ -3,262 +3,534 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SentiGuard</title>
+  <title>SentiGuard Shield</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      width: 320px;
-      min-height: 200px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #0d1117;
-      color: #e6edf3;
+      width: 360px;
+      min-height: 440px;
+      background: #070a0f;
+      color: #f1f5f9;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow-x: hidden;
     }
 
+    /* Header */
     .header {
-      background: linear-gradient(135deg, #161b22, #1f2937);
-      padding: 16px 18px;
-      border-bottom: 1px solid #30363d;
+      background: rgba(15, 23, 42, 0.85);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(12px);
+    }
+
+    .brand {
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
-    .header-logo { font-size: 22px; }
+    .logo-badge {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: rgba(59, 130, 246, 0.2);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #38bdf8;
+    }
 
-    .header-text h1 {
-      font-size: 15px;
+    .brand-title {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      color: #ffffff;
+    }
+
+    .shield-status-pill {
+      font-size: 10px;
+      font-family: ui-monospace, monospace;
       font-weight: 700;
-      color: #58a6ff;
-      letter-spacing: 0.5px;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
 
-    .header-text p {
+    .shield-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+    }
+
+    /* Tab Switcher */
+    .nav-tabs {
+      display: flex;
+      background: rgba(15, 23, 42, 0.6);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 4px;
+    }
+
+    .nav-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #94a3b8;
       font-size: 11px;
-      color: #8b949e;
-      margin-top: 1px;
+      font-weight: 700;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
     }
 
-    .status-section {
+    .nav-btn.active {
+      background: rgba(59, 130, 246, 0.25);
+      color: #ffffff;
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Content Panes */
+    .tab-pane {
+      display: none;
       padding: 16px 18px;
     }
 
-    .status-card {
+    .tab-pane.active {
+      display: block;
+    }
+
+    /* Current URL Omnibar */
+    .url-preview {
+      background: rgba(2, 6, 23, 0.8);
+      border: 1px solid #1e293b;
       border-radius: 10px;
-      padding: 14px 16px;
-      margin-bottom: 12px;
+      padding: 8px 12px;
+      margin-bottom: 14px;
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      color: #94a3b8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 6px;
     }
 
-    .status-card.scanning {
-      background: #161b22;
-      border: 1px solid #30363d;
-    }
-
-    .status-card.safe {
-      background: #0d2818;
-      border: 1px solid #238636;
-    }
-
-    .status-card.phishing {
-      background: #2d1010;
-      border: 1px solid #da3633;
-    }
-
-    .status-card.error {
-      background: #1c1a10;
-      border: 1px solid #9e6a03;
-    }
-
-    .status-icon { font-size: 26px; flex-shrink: 0; }
-
-    .status-info h2 {
-      font-size: 14px;
-      font-weight: 700;
-    }
-
-    .status-info p {
-      font-size: 12px;
-      color: #8b949e;
-      margin-top: 2px;
-    }
-
-    .trust-bar {
-      margin-top: 10px;
-    }
-
-    .trust-bar-label {
+    /* Status Card */
+    .status-card {
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
       display: flex;
-      justify-content: space-between;
-      font-size: 11px;
-      color: #8b949e;
-      margin-bottom: 4px;
-    }
-
-    .trust-bar-track {
-      height: 6px;
-      background: #21262d;
-      border-radius: 3px;
+      align-items: center;
+      gap: 14px;
+      border: 1px solid transparent;
+      position: relative;
       overflow: hidden;
     }
 
-    .trust-bar-fill {
-      height: 100%;
-      border-radius: 3px;
-      transition: width 0.6s ease;
+    .status-card.safe {
+      background: rgba(6, 78, 59, 0.25);
+      border-color: rgba(16, 185, 129, 0.3);
     }
 
-    .trust-bar-fill.safe    { background: #3fb950; }
-    .trust-bar-fill.phishing { background: #f85149; }
-
-    .scan-btn {
-      width: 100%;
-      background: #1f6feb;
-      color: white;
-      border: none;
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 4px;
-      transition: background 0.2s;
+    .status-card.phishing {
+      background: rgba(136, 19, 55, 0.3);
+      border-color: rgba(244, 63, 94, 0.4);
     }
 
-    .scan-btn:hover { background: #388bfd; }
-    .scan-btn:disabled { background: #21262d; color: #484f58; cursor: default; }
-
-    .risk-list {
-      margin-top: 10px;
-      padding: 10px 12px;
-      background: #161b22;
-      border-radius: 8px;
-      border: 1px solid #30363d;
+    .status-card.scanning {
+      background: rgba(30, 41, 59, 0.5);
+      border-color: rgba(255, 255, 255, 0.1);
     }
 
-    .risk-list h3 {
+    .card-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .safe .card-icon {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+    }
+
+    .phishing .card-icon {
+      background: rgba(244, 63, 94, 0.2);
+      color: #fb7185;
+    }
+
+    .scanning .card-icon {
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+    }
+
+    .card-info h2 {
+      font-size: 14px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.2px;
+    }
+
+    .card-info p {
       font-size: 11px;
-      color: #8b949e;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+
+    /* Trust Score Bar */
+    .trust-gauge {
+      margin-bottom: 16px;
+    }
+
+    .gauge-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 6px;
+      color: #94a3b8;
+      margin-bottom: 5px;
     }
 
-    .risk-item {
-      font-size: 12px;
-      color: #f85149;
-      padding: 3px 0;
+    .gauge-track {
+      height: 6px;
+      background: #0f172a;
+      border-radius: 9999px;
+      overflow: hidden;
+      border: 1px solid #1e293b;
+    }
+
+    .gauge-fill {
+      height: 100%;
+      border-radius: 9999px;
+      transition: width 0.8s ease;
+    }
+
+    .gauge-fill.safe {
+      background: linear-gradient(90deg, #10b981, #06b6d4);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+    }
+
+    .gauge-fill.phishing {
+      background: linear-gradient(90deg, #f43f5e, #fb923c);
+      box-shadow: 0 0 10px rgba(244, 63, 94, 0.5);
+    }
+
+    /* Risks Chips */
+    .risk-chips {
+      margin-bottom: 16px;
+      max-height: 110px;
+      overflow-y: auto;
+    }
+
+    .chip {
+      font-size: 11px;
+      background: rgba(244, 63, 94, 0.1);
+      border: 1px solid rgba(244, 63, 94, 0.2);
+      color: #fecdd3;
+      padding: 6px 10px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      line-height: 1.4;
       display: flex;
       align-items: flex-start;
       gap: 6px;
     }
 
-    .risk-item::before { content: "•"; flex-shrink: 0; }
+    /* Actions */
+    .btn-primary {
+      width: 100%;
+      background: linear-gradient(135deg, #2563eb, #06b6d4);
+      color: #ffffff;
+      border: none;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 0 15px rgba(37, 99, 235, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
 
-    .toggle-row {
+    .btn-primary:hover {
+      box-shadow: 0 0 20px rgba(37, 99, 235, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary-link {
+      width: 100%;
+      background: transparent;
+      border: 1px solid #1e293b;
+      color: #94a3b8;
+      padding: 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary-link:hover {
+      background: rgba(30, 41, 59, 0.5);
+      color: #ffffff;
+    }
+
+    /* Allowlist Tab */
+    .whitelist-form {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .whitelist-input {
+      flex: 1;
+      background: #020617;
+      border: 1px solid #1e293b;
+      color: #ffffff;
+      font-size: 12px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      outline: none;
+      font-family: ui-monospace, monospace;
+    }
+
+    .whitelist-input:focus {
+      border-color: #38bdf8;
+    }
+
+    .btn-add {
+      background: #0284c7;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0 14px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .whitelist-list {
+      list-style: none;
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      background: rgba(2, 6, 23, 0.5);
+    }
+
+    .whitelist-item {
+      padding: 8px 12px;
+      font-size: 12px;
+      font-family: ui-monospace, monospace;
+      color: #cbd5e1;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 18px;
-      border-top: 1px solid #21262d;
+      border-bottom: 1px solid #0f172a;
+    }
+
+    .whitelist-item:last-child {
+      border-bottom: none;
+    }
+
+    .btn-del {
+      background: transparent;
+      border: none;
+      color: #ef4444;
+      cursor: pointer;
       font-size: 12px;
-      color: #8b949e;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .btn-del:hover {
+      background: rgba(239, 68, 68, 0.15);
+    }
+
+    .empty-whitelist {
+      padding: 24px;
+      text-align: center;
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    /* Toggles footer */
+    .toggle-bar {
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #94a3b8;
     }
 
     .toggle {
       position: relative;
-      width: 36px;
-      height: 20px;
+      width: 32px;
+      height: 18px;
     }
 
     .toggle input { opacity: 0; width: 0; height: 0; }
 
-    .toggle-slider {
+    .slider {
       position: absolute;
       inset: 0;
-      background: #30363d;
+      background: #334155;
       border-radius: 20px;
       cursor: pointer;
       transition: background 0.2s;
     }
 
-    .toggle-slider::before {
+    .slider::before {
       content: "";
       position: absolute;
-      height: 14px; width: 14px;
-      left: 3px; top: 3px;
+      height: 12px;
+      width: 12px;
+      left: 3px;
+      top: 3px;
       background: white;
       border-radius: 50%;
       transition: transform 0.2s;
     }
 
-    .toggle input:checked + .toggle-slider { background: #238636; }
-    .toggle input:checked + .toggle-slider::before { transform: translateX(16px); }
+    .toggle input:checked + .slider { background: #0284c7; }
+    .toggle input:checked + .slider::before { transform: translateX(14px); }
 
     .footer {
       padding: 8px 18px 12px;
-      font-size: 10px;
-      color: #484f58;
       text-align: center;
+      font-size: 10px;
+      color: #475569;
     }
 
     .footer a {
-      color: #58a6ff;
+      color: #38bdf8;
       text-decoration: none;
     }
   </style>
 </head>
 <body>
 
+  <!-- Header -->
   <div class="header">
-    <div class="header-logo">🛡️</div>
-    <div class="header-text">
-      <h1>SentiGuard</h1>
-      <p>Phishing Detection Active</p>
+    <div class="brand">
+      <div class="logo-badge">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-title">SentiGuard Shield</div>
+      </div>
+    </div>
+    <div class="shield-status-pill">
+      <div class="shield-dot"></div>
+      ACTIVE SHIELD
     </div>
   </div>
 
-  <div class="status-section">
-    <div id="statusCard" class="status-card scanning">
-      <div class="status-icon" id="statusIcon">🔍</div>
-      <div class="status-info">
-        <h2 id="statusTitle">Checking page...</h2>
-        <p id="statusSub">Analyzing current URL</p>
+  <!-- Navigation -->
+  <div class="nav-tabs">
+    <button class="nav-btn active" id="tabThreatsBtn">Live Threat Status</button>
+    <button class="nav-btn" id="tabWhitelistBtn">Allowlist Manager</button>
+  </div>
+
+  <!-- Tab 1: Threat Status -->
+  <div class="tab-pane active" id="paneThreats">
+    <div class="url-preview" id="currentUrl">
+      <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+      </svg>
+      <span id="urlText">Resolving tab...</span>
+    </div>
+
+    <div class="status-card scanning" id="statusCard">
+      <div class="card-icon" id="cardIcon">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8" stroke-width="2"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35"/>
+        </svg>
+      </div>
+      <div class="card-info">
+        <h2 id="statusHeadline">Analyzing page...</h2>
+        <p id="statusSubtitle">Connecting to Threat Intelligence</p>
       </div>
     </div>
 
-    <div id="trustBarContainer" class="trust-bar" style="display:none;">
-      <div class="trust-bar-label">
-        <span>Trust Score</span>
-        <span id="trustScoreLabel">–</span>
+    <div class="trust-gauge" id="gaugeBox" style="display:none;">
+      <div class="gauge-label">
+        <span>Trust Rating</span>
+        <span id="scoreText">0%</span>
       </div>
-      <div class="trust-bar-track">
-        <div id="trustBarFill" class="trust-bar-fill safe" style="width: 0%"></div>
+      <div class="gauge-track">
+        <div class="gauge-fill safe" id="gaugeFill" style="width: 0%"></div>
       </div>
     </div>
 
-    <div id="riskList" class="risk-list" style="display:none;">
-      <h3>Risk Factors</h3>
-      <div id="riskItems"></div>
-    </div>
+    <div class="risk-chips" id="risksContainer" style="display:none;"></div>
 
-    <button id="scanBtn" class="scan-btn" style="margin-top: 12px;">
-      Scan Current Page
+    <button class="btn-primary" id="btnRescan">
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+      </svg>
+      Rescan Current Page
+    </button>
+
+    <button class="btn-secondary-link" id="btnQuickWhitelist">
+      Whitelist This Domain
     </button>
   </div>
 
-  <div class="toggle-row">
-    <span>Auto-scan all pages</span>
+  <!-- Tab 2: Allowlist Manager -->
+  <div class="tab-pane" id="paneWhitelist">
+    <div class="whitelist-form">
+      <input type="text" class="whitelist-input" id="newDomainInput" placeholder="domain.com" />
+      <button class="btn-add" id="btnAddDomain">Add</button>
+    </div>
+
+    <ul class="whitelist-list" id="whitelistUl">
+      <li class="empty-whitelist">Loading trusted domains...</li>
+    </ul>
+  </div>
+
+  <!-- Bottom Toggle -->
+  <div class="toggle-bar">
+    <span>Active Navigation Interceptor</span>
     <label class="toggle">
-      <input type="checkbox" id="autoScanToggle" checked />
-      <span class="toggle-slider"></span>
+      <input type="checkbox" id="shieldToggle" checked />
+      <span class="slider"></span>
     </label>
   </div>
 
   <div class="footer">
-    <a href="https://sentiguard-hkef.onrender.com" target="_blank">Open SentiGuard Website</a>
+    <a href="https://senti-guard-sooty.vercel.app" target="_blank" id="dashboardLink">
+      Open Full Threat Intelligence Dashboard ↗
+    </a>
   </div>
 
   <script src="popup.js"></script>
