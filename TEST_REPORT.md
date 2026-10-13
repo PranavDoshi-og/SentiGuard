@@ -9,7 +9,7 @@ Evaluated **50** curated URLs against the active **RandomForest** classifier wit
 | 3 | `https://www.microsoft.com/en-us/windows` | SAFE | **SAFE** | 100.00% | ✅ | HTTPS Encryption |
 | 4 | `https://en.wikipedia.org/wiki/Cybersecurity` | SAFE | **SAFE** | 75.57% | ✅ | WHOIS Time to Expiry (Days) |
 | 5 | `https://www.apple.com/macbook-pro/` | SAFE | **SAFE** | 75.57% | ✅ | WHOIS Time to Expiry (Days) |
-| 6 | `https://aws.amazon.com/console/` | SAFE | **SAFE** | 100.00% | ✅ | Plain HTTP (Unencrypted) |
+| 6 | `https://aws.amazon.com/console/` | SAFE | **SAFE** | 86.00% | ✅ | Valid TLS/SSL Certificate |
 | 7 | `https://www.nytimes.com/section/technology` | SAFE | **SAFE** | 75.57% | ✅ | WHOIS Time to Expiry (Days) |
 | 8 | `https://stackoverflow.com/questions/ask` | SAFE | **SAFE** | 75.77% | ✅ | WHOIS Time to Expiry (Days) |
 | 9 | `https://www.python.org/downloads/` | SAFE | **SAFE** | 100.00% | ✅ | Plain HTTP (Unencrypted) |

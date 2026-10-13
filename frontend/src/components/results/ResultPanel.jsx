@@ -6,9 +6,7 @@ import {
   ExternalLink,
   Copy,
   Check,
-  Cpu,
-  Globe,
-  Layers,
+  Zap,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -22,7 +20,8 @@ export function cn(...inputs) {
 }
 
 function AnimatedNumber({ value }) {
-  const [displayValue, setDisplayValue] = useState(0);
+  const numValue = typeof value === 'number' && !isNaN(value) ? value : 0;
+  const [displayValue, setDisplayValue] = useState(numValue);
 
   useEffect(() => {
     let startTime;
@@ -33,7 +32,7 @@ function AnimatedNumber({ value }) {
       const progress = Math.min((currentTime - startTime) / duration, 1);
       const easeProgress = 1 - Math.pow(1 - progress, 4);
 
-      setDisplayValue(Math.floor(easeProgress * value));
+      setDisplayValue(Math.floor(easeProgress * numValue));
 
       if (progress < 1) {
         requestAnimationFrame(animate);
@@ -41,7 +40,7 @@ function AnimatedNumber({ value }) {
     };
 
     requestAnimationFrame(animate);
-  }, [value]);
+  }, [numValue]);
 
   return <>{displayValue}</>;
 }
@@ -61,12 +60,15 @@ export default function ResultPanel({ result }) {
   if (!result) return null;
 
   const isSafe = result.verdict === 'SAFE';
-  const confidencePercent = Math.round((result.confidence || 0) * 100);
+  const confidencePercent = Math.round((typeof result.confidence === 'number' ? result.confidence : 0) * 100);
+  const trustScore = typeof result.trust_score === 'number' && !isNaN(result.trust_score) ? result.trust_score : (isSafe ? 90 : 10);
 
   const handleCopyUrl = () => {
-    navigator.clipboard.writeText(result.url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (result.url) {
+      navigator.clipboard.writeText(result.url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   return (
@@ -130,6 +132,17 @@ export default function ResultPanel({ result }) {
                   {result.model_type}
                 </span>
               )}
+              {result.cached && (
+                <span className="text-xs font-mono font-bold text-amber-300 bg-amber-950/40 border border-amber-500/30 px-2 py-0.5 rounded flex items-center gap-1">
+                  <Zap className="w-3 h-3 text-amber-400" />
+                  Cached ({result.cache_latency_ms ? `${result.cache_latency_ms}ms` : '<1ms'})
+                </span>
+              )}
+              {result.external_intelligence?.flagged && (
+                <span className="text-xs font-mono font-bold text-rose-300 bg-rose-950/50 border border-rose-500/40 px-2 py-0.5 rounded">
+                  🚨 External Feed Verified
+                </span>
+              )}
             </div>
 
             {/* Target URL Omnibar */}
@@ -144,15 +157,17 @@ export default function ResultPanel({ result }) {
               >
                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
-              <a
-                href={result.url}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="hover:text-blue-400 p-1 rounded transition-colors text-slate-400"
-                title="Open in new tab (Caution)"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
+              {result.url && (
+                <a
+                  href={result.url}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="hover:text-blue-400 p-1 rounded transition-colors text-slate-400"
+                  title="Open in new tab (Caution)"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -172,7 +187,7 @@ export default function ResultPanel({ result }) {
           </div>
           <div className="text-right">
             <span className="text-4xl md:text-5xl font-black font-mono tracking-tight text-white">
-              <AnimatedNumber value={result.trust_score} />
+              <AnimatedNumber value={trustScore} />
               <span className="text-2xl text-slate-500">/100</span>
             </span>
           </div>
@@ -181,7 +196,7 @@ export default function ResultPanel({ result }) {
         <div className="h-4 bg-slate-950 rounded-full overflow-hidden p-0.5 shadow-inner border border-slate-800 relative">
           <motion.div
             initial={{ width: 0 }}
-            animate={{ width: `${result.trust_score}%` }}
+            animate={{ width: `${Math.min(100, Math.max(0, trustScore))}%` }}
             transition={{ duration: 1.2, ease: 'easeOut', delay: 0.2 }}
             className={cn(
               'h-full rounded-full relative shadow-[0_0_15px_currentColor]',
@@ -223,7 +238,11 @@ export default function ResultPanel({ result }) {
       <NetworkProfileCard networkProfile={result.network_profile} url={result.url} />
 
       {/* ── 5. SHAP Tree Explainer ───────────────────────────── */}
-      <ShapExplanations shapExplanations={result.shap_explanations} modelType={result.model_type} />
+      <ShapExplanations
+        shapExplanations={result.shap_explanations}
+        modelType={result.model_type}
+        features={result.features}
+      />
 
       {/* ── 6. Heuristic Matrix ─────────────────────────────── */}
       <HeuristicMatrix features={result.features} />

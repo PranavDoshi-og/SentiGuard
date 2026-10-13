@@ -2,16 +2,20 @@
 SentiGuard - Enterprise Threat Intelligence & Phishing Detection API
 ───────────────────────────────────────────────────────────────────
 High-performance REST API backend powering zero-day phishing detection,
-live WHOIS/DNS/SSL profiling, and SHAP explainability diagnostics.
+sub-2ms reputation caching, live network profiling, rate limiting, and SHAP diagnostics.
 """
 
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from app.routes import health, scan
 from app.utils.logger import setup_logger
+from app.utils.limiter import limiter
+from app.db.session import init_db
 
 logger = setup_logger("sentiguard.main")
 
@@ -19,6 +23,12 @@ logger = setup_logger("sentiguard.main")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("SentiGuard Threat Intelligence API initializing...")
+    try:
+        init_db()
+        logger.info("SQL database schema initialized successfully.")
+    except Exception as e:
+        logger.error(f"Failed to initialize database schema: {e}")
+
     logger.info("Interactive OpenAPI documentation active at /docs and /redoc")
     yield
     logger.info("SentiGuard API shutting down cleanly.")
@@ -27,7 +37,7 @@ async def lifespan(app: FastAPI):
 # ─── FastAPI Application Instance ─────────────────────────────
 app = FastAPI(
     title="SentiGuard Threat Intelligence API",
-    description="Enterprise ML-Driven Phishing Detection & Network Profiling API",
+    description="Enterprise ML-Driven Phishing Detection, Network Profiling & Reputation API",
     version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -35,8 +45,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# ─── SlowAPI Rate Limiting ────────────────────────────────────
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 # ─── CORS Middleware ──────────────────────────────────────────
-# Read ALLOWED_ORIGINS from environment (comma-separated or wildcard)
 allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "*").strip()
 if allowed_origins_env == "*":
     origins = ["*"]
@@ -68,6 +81,9 @@ def root():
             "health": "/api/health",
             "scan_url": "/api/scan/url",
             "scan_qr": "/api/scan/qr",
+            "report_dispute": "/api/scan/report",
+            "cache_stats": "/api/scan/cache/stats",
+            "telemetry_stats": "/api/scan/stats",
             "documentation": "/docs",
             "redoc": "/redoc",
             "openapi_schema": "/openapi.json"
