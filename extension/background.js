@@ -32,7 +32,15 @@ async function getSettings() {
     apiBase: LOCAL_API_BASE,
   };
   const stored = await chrome.storage.sync.get(defaults);
-  return { ...defaults, ...stored };
+  let apiBase = stored.apiBase || defaults.apiBase;
+
+  // Clean up legacy/deprecated endpoint if present in storage
+  if (apiBase.includes("sentiguard-hkef")) {
+    apiBase = LOCAL_API_BASE;
+    chrome.storage.sync.set({ apiBase });
+  }
+
+  return { ...defaults, ...stored, apiBase };
 }
 
 async function getWhitelist() {
@@ -178,10 +186,12 @@ function updateBadge(tabId, status) {
 async function scanURL(url) {
   const settings = await getSettings();
 
-  // Try configured API base, with automatic fallback
-  const candidateBases = [settings.apiBase, LOCAL_API_BASE, PROD_API_BASE].filter(
-    (b, i, arr) => arr.indexOf(b) === i
-  );
+  // Try local API first (fastest and zero-latency), then configured/production
+  const candidateBases = [
+    LOCAL_API_BASE,
+    settings.apiBase,
+    PROD_API_BASE,
+  ].filter((b, i, arr) => b && arr.indexOf(b) === i && !b.includes("sentiguard-hkef"));
 
   let lastError = null;
   for (const base of candidateBases) {
@@ -194,6 +204,9 @@ async function scanURL(url) {
 
       if (response.ok) {
         return await response.json();
+      } else {
+        const errorDetail = await response.json().catch(() => ({}));
+        lastError = new Error(errorDetail.detail || `API returned status ${response.status} from ${base}`);
       }
     } catch (err) {
       lastError = err;
