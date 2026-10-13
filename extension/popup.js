@@ -1,128 +1,274 @@
 /**
- * SentiGuard - Popup Script
- * Handles popup UI logic: scan current tab, display results, toggle auto-scan.
+ * SentiGuard - Popup Script (Phase 3 Active Shield)
+ * ────────────────────────────────────────────────
+ * Controls:
+ * 1. Live tab scanning & reputation display
+ * 2. Allowlist domain manager (add, list, remove)
+ * 3. Active navigation interceptor toggle
  */
 
-const statusCard      = document.getElementById("statusCard");
-const statusIcon      = document.getElementById("statusIcon");
-const statusTitle     = document.getElementById("statusTitle");
-const statusSub       = document.getElementById("statusSub");
-const trustBarContainer = document.getElementById("trustBarContainer");
-const trustBarFill    = document.getElementById("trustBarFill");
-const trustScoreLabel = document.getElementById("trustScoreLabel");
-const riskList        = document.getElementById("riskList");
-const riskItems       = document.getElementById("riskItems");
-const scanBtn         = document.getElementById("scanBtn");
-const autoScanToggle  = document.getElementById("autoScanToggle");
+let currentTabUrl = "";
+let currentDomain = "";
+
+// Elements
+const tabThreatsBtn = document.getElementById("tabThreatsBtn");
+const tabWhitelistBtn = document.getElementById("tabWhitelistBtn");
+const paneThreats = document.getElementById("paneThreats");
+const paneWhitelist = document.getElementById("paneWhitelist");
+
+const urlText = document.getElementById("urlText");
+const statusCard = document.getElementById("statusCard");
+const cardIcon = document.getElementById("cardIcon");
+const statusHeadline = document.getElementById("statusHeadline");
+const statusSubtitle = document.getElementById("statusSubtitle");
+const gaugeBox = document.getElementById("gaugeBox");
+const gaugeFill = document.getElementById("gaugeFill");
+const scoreText = document.getElementById("scoreText");
+const risksContainer = document.getElementById("risksContainer");
+
+const btnRescan = document.getElementById("btnRescan");
+const btnQuickWhitelist = document.getElementById("btnQuickWhitelist");
+const shieldToggle = document.getElementById("shieldToggle");
+
+const newDomainInput = document.getElementById("newDomainInput");
+const btnAddDomain = document.getElementById("btnAddDomain");
+const whitelistUl = document.getElementById("whitelistUl");
 
 
-// ─── Init ──────────────────────────────────────────────────────────────────────
+// ─── Tab Switching ────────────────────────────────────────────────────────────
+
+tabThreatsBtn.addEventListener("click", () => {
+  tabThreatsBtn.classList.add("active");
+  tabWhitelistBtn.classList.remove("active");
+  paneThreats.classList.add("active");
+  paneWhitelist.classList.remove("active");
+});
+
+tabWhitelistBtn.addEventListener("click", () => {
+  tabWhitelistBtn.classList.add("active");
+  tabThreatsBtn.classList.remove("active");
+  paneWhitelist.classList.add("active");
+  paneThreats.classList.remove("active");
+  loadWhitelist();
+});
+
+
+// ─── Initialization ───────────────────────────────────────────────────────────
 
 async function init() {
-  // Load saved settings
-  const settings = await chrome.storage.sync.get({ autoScan: true });
-  autoScanToggle.checked = settings.autoScan;
+  // Load settings
+  chrome.runtime.sendMessage({ type: "GET_SETTINGS" }, (settings) => {
+    if (settings) {
+      shieldToggle.checked = settings.activeShield !== false;
+    }
+  });
 
-  // Get current tab URL and scan it
+  // Query active tab
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (tab?.url && !tab.url.startsWith("chrome://")) {
-    await scanURL(tab.url);
-  } else {
-    setStatus("unavailable");
+  if (!tab || !tab.url) {
+    showUnavailable("No active page detected");
+    return;
   }
-}
 
+  currentTabUrl = tab.url;
 
-// ─── Scan ──────────────────────────────────────────────────────────────────────
-
-async function scanURL(url) {
-  setStatus("scanning");
+  if (
+    currentTabUrl.startsWith("chrome://") ||
+    currentTabUrl.startsWith("chrome-extension://") ||
+    currentTabUrl.startsWith("about:") ||
+    currentTabUrl.startsWith("edge://")
+  ) {
+    showUnavailable("System Page (Protected)");
+    return;
+  }
 
   try {
-    const response = await chrome.runtime.sendMessage({
-      type: "SCAN_URL",
-      url,
-    });
+    currentDomain = new URL(currentTabUrl).hostname;
+    urlText.textContent = currentDomain || currentTabUrl;
+    btnQuickWhitelist.textContent = `Whitelist "${currentDomain}"`;
+  } catch {
+    urlText.textContent = currentTabUrl;
+  }
 
-    if (!response?.success) {
-      throw new Error(response?.error || "API unreachable");
+  // Scan current URL
+  performScan(currentTabUrl);
+}
+
+
+// ─── Perform Scan ─────────────────────────────────────────────────────────────
+
+function performScan(url) {
+  setLoadingState();
+
+  chrome.runtime.sendMessage({ type: "SCAN_URL", url }, (res) => {
+    if (chrome.runtime.lastError || !res || !res.success) {
+      showErrorState(res?.error || "Threat API unreachable");
+      return;
     }
 
-    displayResult(response.data);
-
-  } catch (err) {
-    setStatus("error", err.message);
-  }
+    renderScanResult(res.data);
+  });
 }
 
 
-// ─── Display Result ────────────────────────────────────────────────────────────
+// ─── UI Rendering ─────────────────────────────────────────────────────────────
 
-function displayResult(result) {
-  const isSafe = result.verdict === "SAFE";
+function setLoadingState() {
+  statusCard.className = "status-card scanning";
+  cardIcon.innerHTML = `
+    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="animate-spin">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+    </svg>
+  `;
+  statusHeadline.textContent = "Scanning Page...";
+  statusSubtitle.textContent = "Checking live heuristics & reputation";
+  gaugeBox.style.display = "none";
+  risksContainer.style.display = "none";
+}
 
-  // Status card
+function renderScanResult(data) {
+  const isSafe = data.verdict === "SAFE";
+  const trustScore = typeof data.trust_score === "number" ? data.trust_score : (isSafe ? 95 : 10);
+
   statusCard.className = `status-card ${isSafe ? "safe" : "phishing"}`;
-  statusIcon.textContent = isSafe ? "✅" : "🚨";
-  statusTitle.textContent = isSafe ? "Safe Website" : "Phishing Detected!";
-  statusSub.textContent = `Trust Score: ${result.trust_score}%`;
 
-  // Trust bar
-  trustBarContainer.style.display = "block";
-  trustBarFill.style.width = `${result.trust_score}%`;
-  trustBarFill.className = `trust-bar-fill ${isSafe ? "safe" : "phishing"}`;
-  trustScoreLabel.textContent = `${result.trust_score}%`;
+  if (isSafe) {
+    cardIcon.innerHTML = `
+      <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+      </svg>
+    `;
+    statusHeadline.textContent = "Verified Safe";
+    statusSubtitle.textContent = `Trust Rating: ${trustScore}% • Authentic Destination`;
+  } else {
+    cardIcon.innerHTML = `
+      <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+    `;
+    statusHeadline.textContent = "Malicious Phishing Detected";
+    statusSubtitle.textContent = `Critical Risk • Trust Rating: ${trustScore}%`;
+  }
 
-  // Risk factors
-  if (!isSafe && result.risk_factors?.length > 0) {
-    riskList.style.display = "block";
-    riskItems.innerHTML = result.risk_factors
-      .slice(0, 5)
-      .map(r => `<div class="risk-item">${r}</div>`)
+  // Gauge
+  gaugeBox.style.display = "block";
+  gaugeFill.className = `gauge-fill ${isSafe ? "safe" : "phishing"}`;
+  gaugeFill.style.width = `${Math.min(100, Math.max(0, trustScore))}%`;
+  scoreText.textContent = `${trustScore}%`;
+
+  // Risk Factors
+  if (!isSafe && data.risk_factors && data.risk_factors.length > 0) {
+    risksContainer.style.display = "block";
+    risksContainer.innerHTML = data.risk_factors
+      .slice(0, 4)
+      .map((r) => `<div class="chip"><span>⚠️</span> <span>${escapeHtml(r)}</span></div>`)
       .join("");
   } else {
-    riskList.style.display = "none";
+    risksContainer.style.display = "none";
   }
 }
 
+function showUnavailable(reason) {
+  statusCard.className = "status-card scanning";
+  cardIcon.innerHTML = `<span>ℹ️</span>`;
+  statusHeadline.textContent = reason;
+  statusSubtitle.textContent = "SentiGuard protects standard web URLs";
+  gaugeBox.style.display = "none";
+  risksContainer.style.display = "none";
+  btnRescan.disabled = true;
+  btnQuickWhitelist.disabled = true;
+}
 
-// ─── Status States ─────────────────────────────────────────────────────────────
+function showErrorState(msg) {
+  statusCard.className = "status-card scanning";
+  cardIcon.innerHTML = `<span>⚠️</span>`;
+  statusHeadline.textContent = "API Unreachable";
+  statusSubtitle.textContent = msg || "Check backend on port 8000";
+  gaugeBox.style.display = "none";
+  risksContainer.style.display = "none";
+}
 
-function setStatus(state, detail = "") {
-  trustBarContainer.style.display = "none";
-  riskList.style.display = "none";
-
-  const states = {
-    scanning:    { cls: "scanning", icon: "🔍", title: "Scanning...",       sub: "Analyzing current URL"    },
-    unavailable: { cls: "scanning", icon: "ℹ️",  title: "Not available",     sub: "Can't scan this page"     },
-    error:       { cls: "error",    icon: "⚠️",  title: "API Unreachable",    sub: detail || "Check extension API settings." },
-  };
-
-  const s = states[state] || states.scanning;
-  statusCard.className = `status-card ${s.cls}`;
-  statusIcon.textContent = s.icon;
-  statusTitle.textContent = s.title;
-  statusSub.textContent = s.sub;
+function escapeHtml(str) {
+  const d = document.createElement("div");
+  d.textContent = str;
+  return d.innerHTML;
 }
 
 
-// ─── Event Listeners ───────────────────────────────────────────────────────────
+// ─── Whitelist Manager ────────────────────────────────────────────────────────
 
-scanBtn.addEventListener("click", async () => {
-  scanBtn.disabled = true;
-  scanBtn.textContent = "Scanning...";
+function loadWhitelist() {
+  chrome.runtime.sendMessage({ type: "GET_WHITELIST" }, (res) => {
+    const list = res?.whitelist || [];
+    renderWhitelistItems(list);
+  });
+}
 
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (tab?.url) await scanURL(tab.url);
+function renderWhitelistItems(list) {
+  if (list.length === 0) {
+    whitelistUl.innerHTML = `<li class="empty-whitelist">No trusted domains yet. Whitelisted domains bypass security checks.</li>`;
+    return;
+  }
 
-  scanBtn.disabled = false;
-  scanBtn.textContent = "Scan Current Page";
+  whitelistUl.innerHTML = list
+    .map(
+      (domain) => `
+      <li class="whitelist-item">
+        <span>${escapeHtml(domain)}</span>
+        <button class="btn-del" data-domain="${escapeHtml(domain)}" title="Remove domain">✕</button>
+      </li>
+    `
+    )
+    .join("");
+
+  // Attach delete handlers
+  document.querySelectorAll(".btn-del").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const dom = btn.getAttribute("data-domain");
+      chrome.runtime.sendMessage({ type: "REMOVE_WHITELIST", domain: dom }, (res) => {
+        renderWhitelistItems(res?.whitelist || []);
+      });
+    });
+  });
+}
+
+btnAddDomain.addEventListener("click", () => {
+  const domain = newDomainInput.value.trim().toLowerCase();
+  if (!domain) return;
+
+  chrome.runtime.sendMessage({ type: "ADD_WHITELIST", domain }, (res) => {
+    newDomainInput.value = "";
+    renderWhitelistItems(res?.whitelist || []);
+  });
 });
 
-autoScanToggle.addEventListener("change", () => {
-  chrome.storage.sync.set({ autoScan: autoScanToggle.checked });
+btnQuickWhitelist.addEventListener("click", () => {
+  if (!currentDomain) return;
+
+  btnQuickWhitelist.disabled = true;
+  btnQuickWhitelist.textContent = "Whitelisted ✓";
+
+  chrome.runtime.sendMessage({ type: "ADD_WHITELIST", domain: currentDomain }, () => {
+    setTimeout(() => {
+      btnQuickWhitelist.disabled = false;
+      btnQuickWhitelist.textContent = `Whitelist "${currentDomain}"`;
+    }, 2000);
+  });
 });
 
 
-// ─── Run ───────────────────────────────────────────────────────────────────────
+// ─── Event Handlers ───────────────────────────────────────────────────────────
+
+btnRescan.addEventListener("click", () => {
+  if (currentTabUrl) {
+    performScan(currentTabUrl);
+  }
+});
+
+shieldToggle.addEventListener("change", () => {
+  chrome.storage.sync.set({ activeShield: shieldToggle.checked });
+});
+
+
+// Run
 init();
