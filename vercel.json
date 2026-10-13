@@ -5,23 +5,23 @@
   "rewrites": [
     {
       "source": "/api",
-      "destination": "https://sentiguard-hkef.onrender.com/api"
+      "destination": "https://sentiguard-api.onrender.com/api"
     },
     {
       "source": "/api/:path*",
-      "destination": "https://sentiguard-hkef.onrender.com/api/:path*"
+      "destination": "https://sentiguard-api.onrender.com/api/:path*"
     },
     {
       "source": "/docs",
-      "destination": "https://sentiguard-hkef.onrender.com/docs"
+      "destination": "https://sentiguard-api.onrender.com/docs"
     },
     {
       "source": "/redoc",
-      "destination": "https://sentiguard-hkef.onrender.com/redoc"
+      "destination": "https://sentiguard-api.onrender.com/redoc"
     },
     {
       "source": "/openapi.json",
-      "destination": "https://sentiguard-hkef.onrender.com/openapi.json"
+      "destination": "https://sentiguard-api.onrender.com/openapi.json"
     },
     {
       "source": "/(.*)",
