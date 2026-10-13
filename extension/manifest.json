@@ -1,24 +1,48 @@
 {
   "manifest_version": 3,
-  "name": "SentiGuard",
-  "version": "1.0.0",
-  "description": "Real-time phishing detection powered by AI. Protects you from malicious websites automatically.",
+  "name": "SentiGuard — Active Phishing Shield",
+  "version": "2.0.0",
+  "description": "Enterprise zero-day phishing protection with active webNavigation interception, sub-2ms reputation caching, and domain allowlisting.",
+  "icons": {
+    "16": "assets/icon16.png",
+    "48": "assets/icon48.png",
+    "128": "assets/icon128.png"
+  },
   "permissions": [
-    "activeTab",
+    "webNavigation",
+    "tabs",
     "storage",
     "notifications"
   ],
   "host_permissions": [
-    "http://localhost:8000/*",
-    "https://sentiguard-api.onrender.com/*"
+    "http://*/*",
+    "https://*/*"
   ],
   "background": {
     "service_worker": "background.js",
     "type": "module"
   },
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_title": "SentiGuard Navigation Shield",
+    "default_icon": {
+      "16": "assets/icon16.png",
+      "48": "assets/icon48.png",
+      "128": "assets/icon128.png"
+    }
   },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "blocked.html",
+        "blocked.js",
+        "assets/*"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
   "content_scripts": [
     {
       "matches": [
