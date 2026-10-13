@@ -1,22 +1,21 @@
 import React from 'react';
-import { Globe, ShieldCheck, ShieldAlert, Clock, Server, Mail, Lock, AlertTriangle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Globe, ShieldCheck, Clock, Server, Mail, Lock, AlertTriangle } from 'lucide-react';
 
 export default function NetworkProfileCard({ networkProfile, url }) {
   if (!networkProfile) return null;
 
   const {
-    has_dns_a_record,
-    has_dns_mx_record,
+    has_dns_a_record = false,
+    has_dns_mx_record = false,
     domain_age_days = -1,
     time_to_expiry_days = -1,
-    has_valid_ssl,
+    has_valid_ssl = false,
     ssl_days_to_expiry = -1,
-    is_free_ssl_issuer,
+    is_free_ssl_issuer = false,
   } = networkProfile;
 
   const formatDays = (days) => {
-    if (days === null || days === undefined || days < 0) return 'Unavailable';
+    if (typeof days !== 'number' || isNaN(days) || days < 0) return 'Unavailable';
     if (days >= 365) {
       const years = (days / 365.25).toFixed(1);
       return `${Math.round(days).toLocaleString()} days (~${years} yrs)`;
@@ -25,7 +24,9 @@ export default function NetworkProfileCard({ networkProfile, url }) {
   };
 
   const getAgeStatus = (days) => {
-    if (days < 0) return { label: 'Unknown', color: 'text-slate-400 bg-slate-800/60 border-slate-700' };
+    if (typeof days !== 'number' || isNaN(days) || days < 0) {
+      return { label: 'Unknown', color: 'text-slate-400 bg-slate-800/60 border-slate-700' };
+    }
     if (days < 30) return { label: 'Zero-Day (<30d)', color: 'text-rose-400 bg-rose-950/40 border-rose-500/30' };
     if (days < 180) return { label: 'Recent (<6mo)', color: 'text-amber-400 bg-amber-950/40 border-amber-500/30' };
     return { label: 'Established', color: 'text-emerald-400 bg-emerald-950/40 border-emerald-500/30' };
@@ -59,7 +60,7 @@ export default function NetworkProfileCard({ networkProfile, url }) {
           <div className="font-mono text-base font-bold text-white">
             {formatDays(domain_age_days)}
           </div>
-          {time_to_expiry_days > 0 && (
+          {typeof time_to_expiry_days === 'number' && time_to_expiry_days > 0 && (
             <div className="text-[11px] text-slate-400 mt-1">
               Expires in {Math.round(time_to_expiry_days).toLocaleString()} days
             </div>
@@ -134,7 +135,7 @@ export default function NetworkProfileCard({ networkProfile, url }) {
             {has_valid_ssl ? 'End-to-End Encrypted' : 'Plaintext / Insecure'}
           </div>
           <div className="text-[11px] text-slate-400 mt-1">
-            {ssl_days_to_expiry > 0
+            {typeof ssl_days_to_expiry === 'number' && ssl_days_to_expiry > 0
               ? `Valid for ${Math.round(ssl_days_to_expiry)} more days`
               : has_valid_ssl
               ? 'Certificate verified'
@@ -170,21 +171,21 @@ export default function NetworkProfileCard({ networkProfile, url }) {
             </span>
             <span
               className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                domain_age_days >= 0 && domain_age_days < 14
+                typeof domain_age_days === 'number' && domain_age_days >= 0 && domain_age_days < 14
                   ? 'text-rose-400 bg-rose-950/40 border-rose-500/30 animate-pulse'
                   : 'text-emerald-400 bg-emerald-950/40 border-emerald-500/30'
               }`}
             >
-              {domain_age_days >= 0 && domain_age_days < 14 ? 'High Zero-Day Risk' : 'Low Anomaly'}
+              {typeof domain_age_days === 'number' && domain_age_days >= 0 && domain_age_days < 14 ? 'High Zero-Day Risk' : 'Low Anomaly'}
             </span>
           </div>
           <div className="font-mono text-base font-bold text-white">
-            {domain_age_days >= 0 && domain_age_days < 14
+            {typeof domain_age_days === 'number' && domain_age_days >= 0 && domain_age_days < 14
               ? 'New Domain (<14 Days)'
               : 'No Zero-Day Flags'}
           </div>
           <div className="text-[11px] text-slate-400 mt-1">
-            {domain_age_days >= 0 && domain_age_days < 14
+            {typeof domain_age_days === 'number' && domain_age_days >= 0 && domain_age_days < 14
               ? 'Recently registered domains are a primary phishing signal'
               : 'Domain age is consistent with authentic services'}
           </div>

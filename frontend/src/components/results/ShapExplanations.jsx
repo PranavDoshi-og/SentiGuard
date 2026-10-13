@@ -1,11 +1,12 @@
 import React from 'react';
-import { Cpu, ArrowUpRight, ArrowDownRight, Info } from 'lucide-react';
+import { Cpu, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export default function ShapExplanations({ shapExplanations, modelType }) {
+export default function ShapExplanations({ shapExplanations, modelType, features }) {
   if (!shapExplanations || shapExplanations.length === 0) return null;
 
   const formatFeatureName = (name) => {
+    if (!name) return 'Diagnostic Feature';
     return name
       .replace(/^has_/, '')
       .replace(/^is_/, '')
@@ -13,8 +14,18 @@ export default function ShapExplanations({ shapExplanations, modelType }) {
       .replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
+  // Extract SHAP impact value safely (supports both 'impact' and 'shap_value')
+  const getImpactVal = (item) => {
+    if (typeof item?.impact === 'number' && !isNaN(item.impact)) return item.impact;
+    if (typeof item?.shap_value === 'number' && !isNaN(item.shap_value)) return item.shap_value;
+    return 0;
+  };
+
   // Find max absolute shap value to scale the bars proportionally
-  const maxAbsShap = Math.max(...shapExplanations.map((item) => Math.abs(item.shap_value || 0)), 0.05);
+  const maxAbsShap = Math.max(
+    ...shapExplanations.map((item) => Math.abs(getImpactVal(item))),
+    0.05
+  );
 
   return (
     <div className="p-8 border-b border-white/5 bg-slate-900/40">
@@ -35,9 +46,25 @@ export default function ShapExplanations({ shapExplanations, modelType }) {
 
       <div className="space-y-3">
         {shapExplanations.map((item, idx) => {
-          const isPhishingRisk = (item.shap_value || 0) > 0;
-          const absVal = Math.abs(item.shap_value || 0);
+          const impactVal = getImpactVal(item);
+          const isPhishingRisk = item.direction === 'phishing' || impactVal > 0;
+          const absVal = Math.abs(impactVal);
           const barWidthPercent = Math.min(100, Math.max(8, (absVal / maxAbsShap) * 100));
+
+          // Retrieve actual feature value from features object if available
+          let rawValue = features?.[item.feature] ?? item.value;
+          let displayVal = item.direction === 'phishing' ? 'Triggered' : 'Valid';
+          if (rawValue !== undefined && rawValue !== null) {
+            if (typeof rawValue === 'boolean') {
+              displayVal = rawValue ? 'True' : 'False';
+            } else if (typeof rawValue === 'number') {
+              displayVal = Number.isInteger(rawValue) ? String(rawValue) : rawValue.toFixed(1);
+            } else {
+              displayVal = String(rawValue);
+            }
+          }
+
+          const formattedImpact = impactVal > 0 ? `+${impactVal.toFixed(3)}` : impactVal.toFixed(3);
 
           return (
             <div
@@ -47,10 +74,10 @@ export default function ShapExplanations({ shapExplanations, modelType }) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-semibold text-white text-sm">
-                    {formatFeatureName(item.feature)}
+                    {item.label || formatFeatureName(item.feature)}
                   </span>
                   <span className="text-xs font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
-                    value: {String(item.value)}
+                    value: {displayVal}
                   </span>
                   <span
                     className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full border ${
@@ -82,7 +109,7 @@ export default function ShapExplanations({ shapExplanations, modelType }) {
                 <div className="flex justify-between items-center text-[10px] font-mono text-slate-400">
                   <span>Impact Force</span>
                   <span className={isPhishingRisk ? 'text-rose-400 font-bold' : 'text-emerald-400 font-bold'}>
-                    {item.shap_value > 0 ? `+${item.shap_value.toFixed(3)}` : item.shap_value.toFixed(3)}
+                    {formattedImpact}
                   </span>
                 </div>
                 <div className="h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
