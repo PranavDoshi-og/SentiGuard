@@ -1,9 +1,7 @@
 {
-  "buildCommand": "echo 'Static site - no build needed'",
-  "installCommand": "echo 'No dependencies'",
-  "framework": "static",
-  "outputDirectory": "website",
-  "rootDirectory": ".",
+  "framework": "vite",
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/dist",
   "rewrites": [
     {
       "source": "/api",
@@ -24,8 +22,10 @@
     {
       "source": "/openapi.json",
       "destination": "https://sentiguard-hkef.onrender.com/openapi.json"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
-  ],
-  "devCommand": "python -m http.server 8000 --directory website",
-  "devPath": "website"
+  ]
 }
