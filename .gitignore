@@ -11,6 +11,9 @@ env/
 *.egg-info/
 dist/
 build/
+*.db
+*.sqlite3
+.venv/
 
 # ML Models (whitelist compact production model)
 backend/models/*.pkl

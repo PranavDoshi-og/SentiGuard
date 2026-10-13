@@ -1,12 +1,23 @@
 """
-SentiGuard - Scan Service
-─────────────────────────
-Core business logic: feature extraction → ML prediction → result formatting & explainability.
+SentiGuard - Scan Service (Phase 2 Enhanced)
+─────────────────────────────────────────────
+Core business logic:
+1. Sub-2ms Reputation Cache Lookup (TTLCache / Redis)
+2. Feature Extraction (Lexical + Live Network Profiling)
+3. LightGBM / RF ML Classification with SHAP Explainability
+4. Multi-Engine Hybrid Threat Feeds (Google Safe Browsing & Cloudflare Radar)
+5. Telemetry & Database Persistence
 """
 
+import json
 from typing import Any
+from sqlalchemy.orm import Session
+
 from app.ml.predictor import PhishingPredictor
 from app.ml.feature_extractor import extract_features
+from app.services.cache_service import reputation_cache
+from app.services.threat_feeds import threat_feeds_service
+from app.db.models import ScanRecord, DisputeReport
 from app.utils.logger import setup_logger
 
 logger = setup_logger("sentiguard.services.scan")
@@ -15,23 +26,47 @@ logger = setup_logger("sentiguard.services.scan")
 class ScanService:
     def __init__(self):
         self.predictor = PhishingPredictor()
+        self.cache = reputation_cache
+        self.threat_feeds = threat_feeds_service
 
-    def scan_url(self, url: str) -> dict[str, Any]:
+    def scan_url(self, url: str, bypass_cache: bool = False) -> dict[str, Any]:
         """
-        Full pipeline: extract features (lexical + live network) → ML prediction with SHAP → format result.
-        Returns a dict with verdict, trust_score, confidence, risk_factors, features, shap_explanations, model_type.
+        Full Phase 2 pipeline:
+        1. Check reputation cache (sub-2ms)
+        2. Feature extraction (lexical + live network)
+        3. ML prediction with SHAP explanations
+        4. External intelligence verification (Google Safe Browsing / Cloudflare)
+        5. Store in cache & return
         """
+        # 1. Reputation Cache Check
+        if not bypass_cache:
+            cached_result = self.cache.get(url)
+            if cached_result is not None:
+                logger.info(f"Cache HIT for {url} ({cached_result.get('cache_latency_ms', 0)}ms)")
+                return cached_result
+
+        # 2. Extract Features (Lexical + Live Network WHOIS/DNS/SSL)
         features = extract_features(url, enable_network=True)
-        prediction = self.predictor.predict(features, include_shap=True)
 
-        verdict = "PHISHING" if prediction["is_phishing"] else "SAFE"
+        # 3. ML Inference & SHAP Explainability
+        prediction = self.predictor.predict(features, include_shap=True)
+        is_phishing = prediction["is_phishing"]
         confidence = prediction["confidence"]
+        verdict = "PHISHING" if is_phishing else "SAFE"
 
         # Trust score: 0 = definitely phishing, 100 = definitely safe
-        trust_score = round((1.0 - confidence) * 100.0, 1) if prediction["is_phishing"] \
-                      else round(confidence * 100.0, 1)
-
+        trust_score = round((1.0 - confidence) * 100.0, 1) if is_phishing else round(confidence * 100.0, 1)
         risk_factors = self._identify_risk_factors(features)
+
+        # 4. Multi-Engine External Threat Feeds
+        feed_intel = self.threat_feeds.check_url(url)
+        if feed_intel.get("is_flagged"):
+            # External threat engine detected high-confidence malicious activity
+            verdict = "PHISHING"
+            trust_score = 0.0
+            confidence = 1.0
+            for detail in feed_intel.get("details", []):
+                risk_factors.insert(0, f"🚨 {detail}")
 
         network_profile = {
             "has_dns_a_record": bool(features.get("has_dns_a_record", 0.0) > 0),
@@ -43,7 +78,7 @@ class ScanService:
             "is_free_ssl_issuer": bool(features.get("is_free_ssl_issuer", 0.0) > 0),
         }
 
-        return {
+        result = {
             "url": url,
             "verdict": verdict,
             "trust_score": trust_score,
@@ -53,12 +88,72 @@ class ScanService:
             "shap_explanations": prediction.get("shap_explanations", []),
             "model_type": prediction.get("model_type", "Unknown"),
             "network_profile": network_profile,
+            "external_intelligence": {
+                "flagged": feed_intel.get("is_flagged", False),
+                "sources": feed_intel.get("sources", []),
+                "engines_checked": feed_intel.get("checked_engines", []),
+            },
+            "cached": False,
         }
+
+        # 5. Populate Reputation Cache
+        self.cache.set(url, result)
+        return result
+
+    def record_scan_telemetry(self, db: Session, result: dict[str, Any], client_ip: str | None = None) -> None:
+        """Persists scan telemetry into SQLite/PostgreSQL for auditing and analytics."""
+        try:
+            network = result.get("network_profile", {})
+            record = ScanRecord(
+                url=result["url"],
+                verdict=result["verdict"],
+                trust_score=result["trust_score"],
+                confidence=result["confidence"],
+                risk_factors_json=json.dumps(result.get("risk_factors", [])),
+                model_type=result.get("model_type", "Unknown"),
+                has_dns_a_record=network.get("has_dns_a_record", True),
+                has_valid_ssl=network.get("has_valid_ssl", True),
+                domain_age_days=network.get("domain_age_days", -1.0),
+                cached=result.get("cached", False),
+                client_ip=client_ip,
+            )
+            db.add(record)
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            logger.warning(f"Telemetry logging error: {e}")
+
+    def record_dispute_report(
+        self,
+        db: Session,
+        url: str,
+        report_type: str,
+        comment: str | None = None,
+        contact_email: str | None = None,
+        original_verdict: str | None = None,
+        original_trust_score: float | None = None,
+        client_ip: str | None = None,
+    ) -> DisputeReport:
+        """Stores a community dispute report for retraining review."""
+        report = DisputeReport(
+            url=url,
+            report_type=report_type,
+            comment=comment,
+            contact_email=contact_email,
+            original_verdict=original_verdict,
+            original_trust_score=original_trust_score,
+            client_ip=client_ip,
+            status="PENDING_REVIEW",
+        )
+        db.add(report)
+        db.commit()
+        db.refresh(report)
+        logger.info(f"Logged dispute report #{report.id} for {url} ({report_type})")
+        return report
 
     def extract_url_from_qr(self, image_path: str) -> str | None:
         """
         Uses pyzbar to decode a QR code image and extract the embedded URL.
-        Returns the URL string or None if not found.
         """
         try:
             from pyzbar.pyzbar import decode
@@ -75,7 +170,6 @@ class ScanService:
                     return "https://" + data
 
             return None
-
         except ImportError:
             logger.error("pyzbar or Pillow not installed. Run: pip install pyzbar Pillow")
             raise RuntimeError("QR scanning libraries not available.")

@@ -1,27 +1,32 @@
 # SentiGuard Backend Dependencies
 # Install with: pip install -r requirements.txt
 
-# ── Web Framework ──────────────────────────────────────────
+# ── Web Framework & Rate Limiting ───────────────────────────
 fastapi==0.111.0
 uvicorn[standard]==0.30.1
 python-multipart==0.0.9      # Required for file uploads
+slowapi>=0.1.10              # IP-based rate limiting
 
-# ── ML & Intelligence ─────────────────────────────────────
+# ── Caching & Threat Feeds ─────────────────────────────────
+cachetools>=5.5.0            # High-speed in-memory reputation TTL cache
+sqlalchemy>=2.0.0            # Scan telemetry & false-positive persistence
+httpx>=0.27.0                # Multi-engine external intelligence feeds
+
+# ── ML & Intelligence ──────────────────────────────────────
 scikit-learn==1.7.2
 lightgbm>=4.3.0
 shap>=0.45.0
 numpy==2.4.4
 pandas==3.0.2
 
-# ── Network & Domain Profiling ────────────────────────────
+# ── Network & Domain Profiling ─────────────────────────────
 python-whois>=0.9.4
 dnspython>=2.6.0
 
-# ── QR Scanning ───────────────────────────────────────────
+# ── QR Scanning ────────────────────────────────────────────
 pyzbar==0.1.9
 Pillow==12.2.0
 
-# ── Utilities ─────────────────────────────────────────────
+# ── Utilities ──────────────────────────────────────────────
 pydantic==2.12.5
 python-dotenv==1.0.1
-httpx==0.27.0                # Optional: for making outbound HTTP requests
