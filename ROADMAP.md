@@ -7,11 +7,11 @@
 ## 📋 Table of Contents
 1. [Executive Summary & Architecture Goals](#-executive-summary--architecture-goals)
 2. [Git Workflow & Branching Strategy](#-git-workflow--branching-strategy)
-3. [Phase 1: ML Intelligence & Live Network Features](#-phase-1-ml-intelligence--live-network-features-p0)
-4. [Phase 2: Backend Resilience, Caching & Threat Feeds](#-phase-2-backend-resilience-caching--threat-feeds-p1)
-5. [Phase 3: Browser Extension Active Navigation Shield](#-phase-3-browser-extension-active-navigation-shield-p2)
-6. [Phase 4: Frontend Consolidation & Deep Inspector UI](#-phase-4-frontend-consolidation--deep-inspector-ui-p1)
-7. [Phase 5: CI/CD Pipeline, Automated Benchmarking & Releases](#-phase-5-cicd-pipeline-automated-benchmarking--releases-p2)
+3. [Phase 1: ML Intelligence & Live Network Features ✅ COMPLETED](#-phase-1-ml-intelligence--live-network-features-p0--completed)
+4. [Phase 2: Backend Resilience, Caching & Threat Feeds ✅ COMPLETED](#-phase-2-backend-resilience-caching--threat-feeds-p1--completed)
+5. [Phase 3: Browser Extension Active Navigation Shield ✅ COMPLETED](#-phase-3-browser-extension-active-navigation-shield-p2--completed)
+6. [Phase 4: Frontend Consolidation & Deep Inspector UI ✅ COMPLETED](#-phase-4-frontend-consolidation--deep-inspector-ui-p1--completed)
+7. [Phase 5: CI/CD Pipeline, Automated Benchmarking & Releases ✅ COMPLETED](#-phase-5-cicd-pipeline-automated-benchmarking--releases-p2--completed)
 8. [Master Git Commands Cheat Sheet](#-master-git-commands-cheat-sheet)
 
 ---
@@ -59,7 +59,7 @@ To maintain codebase stability across development phases, follow the standard tr
 
 ---
 
-## 🚀 Phase 1: ML Intelligence & Live Network Features (P0)
+## 🚀 Phase 1: ML Intelligence & Live Network Features (P0) ✅ COMPLETED
 
 ### Objective
 Expand the feature extraction pipeline beyond static string properties to include live network characteristics (WHOIS age, DNS resolution, MX records, SSL certs), train on verified threat feeds, and integrate explainable AI (SHAP).
@@ -115,7 +115,7 @@ git push origin main
 
 ---
 
-## ⚡ Phase 2: Backend Resilience, Caching & Threat Feeds (P1)
+## ⚡ Phase 2: Backend Resilience, Caching & Threat Feeds (P1) ✅ COMPLETED
 
 ### Objective
 Implement sub-2ms reputation caching, rate limiting, external intelligence feeds (Google Safe Browsing), scan persistence, and a false-positive reporting endpoint.
@@ -166,7 +166,7 @@ git push origin main
 
 ---
 
-## 🛡️ Phase 3: Browser Extension Active Navigation Shield (P2)
+## 🛡️ Phase 3: Browser Extension Active Navigation Shield (P2) ✅ COMPLETED
 
 ### Objective
 Transform the passive Chrome extension ([`extension/`](file:///d:/OTHERS/2nd%20year/SentiGuard/extension)) into an active real-time shield that checks URLs before page load and displays an interstitial warning on malicious sites.
@@ -210,90 +210,111 @@ git push origin main
 
 ---
 
-## 💻 Phase 4: Frontend Consolidation & Deep Inspector UI (P1)
+## 💻 Phase 4: Frontend Consolidation & Deep Inspector UI (P1) ✅ COMPLETED
 
 ### Objective
-Consolidate the dual frontends ([`website/`](file:///d:/OTHERS/2nd%20year/SentiGuard/website) vs [`frontend/`](file:///d:/OTHERS/2nd%20year/SentiGuard/frontend)), eliminate duplicate code maintenance, and add deep domain inspection cards (WHOIS, GeoIP, ASN, redirect trace).
+Consolidate the dual frontends, eliminate duplicate maintenance, and implement deep domain infrastructure inspection (WHOIS metadata, Hosting/ASN/GeoIP intelligence, HTTP redirect hop tracer, and false-positive dispute workflow).
 
-### Technical Tasks
-1. **Frontend Architecture Unification**:
-   - **Strategy**: Keep [`website/`](file:///d:/OTHERS/2nd%20year/SentiGuard/website) as the static source of truth (zero build step, instant deployment on Vercel/Netlify/FastAPI), and archive the separate React prototype in [`frontend/`](file:///d:/OTHERS/2nd%20year/SentiGuard/frontend).
-2. **Deep Domain Inspector Component**:
-   - Add dedicated sections to [`website/index.html`](file:///d:/OTHERS/2nd%20year/SentiGuard/website/index.html) and [`website/js/app.js`](file:///d:/OTHERS/2nd%20year/SentiGuard/website/js/app.js):
-     - **WHOIS Card**: Registrar, registration date, expiry date.
-     - **Hosting & ASN Card**: Resolved IP address and autonomous system name.
-     - **Redirect Tracer**: Show full path expansion for shortened links (`bit.ly`, `tinyurl.com`).
-3. **Dispute / Report Action**:
-   - Add a *"Report False Positive / Submit Threat"* button in the report utility bar connected to the Phase 2 backend endpoint.
+### Technical Tasks & Architecture Tally
+1. **Frontend Architecture Unification** ✅:
+   - **Tally & Architecture Decision**: In commit `85178c5`, the team unified the frontend into [`frontend/`](file:///d:/OTHERS/2nd%20year/SentiGuard/frontend) (modern React 19 + Tailwind CSS + Vite) and retired/removed the legacy static prototype in `website/`. This enabled interactive SHAP tree explainers, animated HUD optical scanning, and session history state persistence. Both `vercel.json` and `netlify.toml` were re-pointed to build and serve `frontend/`.
+2. **Deep Domain Inspector Component** ✅:
+   - Added [`frontend/src/components/results/DeepInspector.jsx`](file:///d:/OTHERS/2nd%20year/SentiGuard/frontend/src/components/results/DeepInspector.jsx):
+     - **WHOIS Metadata Card**: Registrar name, registration date, expiration date, domain lifespan, authoritative nameservers, ICANN registry status flags (RDAP RFC 7480 query with WHOIS port-43 fallback).
+     - **Hosting & ASN Card**: Primary & all resolved IP addresses (with click-to-copy), Autonomous System Number (ASN) and AS Organization Name (Cymru DNS protocol), BGP CIDR prefix, reverse DNS PTR host, and country code.
+   - Added [`backend/app/services/inspector_service.py`](file:///d:/OTHERS/2nd%20year/SentiGuard/backend/app/services/inspector_service.py) providing cached deep domain profiling and standalone endpoint `GET /api/scan/inspect`.
+3. **HTTP Redirect Tracer** ✅:
+   - Added [`frontend/src/components/results/RedirectTracer.jsx`](file:///d:/OTHERS/2nd%20year/SentiGuard/frontend/src/components/results/RedirectTracer.jsx):
+     - Hop-by-hop HTTP sequence tracer with status code badges (`301 Moved Permanently`, `302 Found`, `307/308`, `200 OK`).
+     - Automatic unmasking and warning alert when URL shorteners (`bit.ly`, `tinyurl.com`, etc.) mask the landing destination.
+4. **Dispute / Threat Report Workflow** ✅:
+   - Added [`frontend/src/components/results/DisputeModal.jsx`](file:///d:/OTHERS/2nd%20year/SentiGuard/frontend/src/components/results/DisputeModal.jsx) connected to `POST /api/scan/report`:
+     - Allows users and analysts to dispute false positives, flag false negatives, or submit new zero-day campaigns.
+     - Prefills URL, original verdict, trust score, and provides dispute category selectors and feedback notifications.
+   - Added *"Dispute / Report"* trigger button in the ResultPanel omnibar utility bar.
 
 ### Affected Files
-- [`website/index.html`](file:///d:/OTHERS/2nd%20year/SentiGuard/website/index.html)
-- [`website/css/style.css`](file:///d:/OTHERS/2nd%20year/SentiGuard/website/css/style.css)
-- [`website/js/app.js`](file:///d:/OTHERS/2nd%20year/SentiGuard/website/js/app.js)
-- [`website/sw.js`](file:///d:/OTHERS/2nd%20year/SentiGuard/website/sw.js)
+- [`backend/app/services/inspector_service.py`](file:///d:/OTHERS/2nd%20year/SentiGuard/backend/app/services/inspector_service.py) (New)
+- [`backend/app/services/scan_service.py`](file:///d:/OTHERS/2nd%20year/SentiGuard/backend/app/services/scan_service.py)
+- [`backend/app/routes/scan.py`](file:///d:/OTHERS/2nd%20year/SentiGuard/backend/app/routes/scan.py)
+- [`backend/tests/test_phase4.py`](file:///d:/OTHERS/2nd%20year/SentiGuard/backend/tests/test_phase4.py) (New)
+- [`frontend/src/services/api.js`](file:///d:/OTHERS/2nd%20year/SentiGuard/frontend/src/services/api.js)
+- [`frontend/src/components/results/DeepInspector.jsx`](file:///d:/OTHERS/2nd%20year/SentiGuard/frontend/src/components/results/DeepInspector.jsx) (New)
+- [`frontend/src/components/results/RedirectTracer.jsx`](file:///d:/OTHERS/2nd%20year/SentiGuard/frontend/src/components/results/RedirectTracer.jsx) (New)
+- [`frontend/src/components/results/DisputeModal.jsx`](file:///d:/OTHERS/2nd%20year/SentiGuard/frontend/src/components/results/DisputeModal.jsx) (New)
+- [`frontend/src/components/results/ResultPanel.jsx`](file:///d:/OTHERS/2nd%20year/SentiGuard/frontend/src/components/results/ResultPanel.jsx)
 
 ### Git Execution Commands
 ```bash
-# 1. Create feature branch
+# 1. Feature branch created
 git checkout -b feature/frontend-deep-inspector
 
-# 2. Implement deep inspection cards and report modal in website/
-# (Edit index.html, style.css, app.js, sw.js)
+# 2. Implement backend deep inspection service & routes
+# 3. Implement frontend DeepInspector, RedirectTracer, and DisputeModal
+# 4. Verify test suite and frontend build
+python backend/tests/test_phase4.py
+npm --prefix frontend run build
 
-# 3. Stage, commit and push
-git add website/
-git commit -m "feat(ui): add WHOIS metadata cards, redirect tracer, and dispute action"
+# 5. Stage, commit and push
+git add backend/ frontend/ ROADMAP.md
+git commit -m "feat(ui): add WHOIS metadata cards, ASN hosting intelligence, redirect tracer, and dispute workflow"
 git push -u origin feature/frontend-deep-inspector
 
-# 4. Merge into main
+# 6. Merge into main
 git checkout main
-git merge --no-ff feature/frontend-deep-inspector -m "merge: incorporate Phase 4 deep inspector UI"
+git merge --no-ff feature/frontend-deep-inspector -m "merge: incorporate Phase 4 deep inspector UI and dispute workflow"
 git push origin main
 ```
 
 ---
 
-## ⚙️ Phase 5: CI/CD Pipeline, Automated Benchmarking & Releases (P2)
+## ⚙️ Phase 5: CI/CD Pipeline, Automated Benchmarking & Releases (P2) ✅ COMPLETED
 
 ### Objective
 Establish automated GitHub Actions workflows for continuous integration, code formatting, security linting, test suite execution, and model release tagging.
 
-### Technical Tasks
-1. **GitHub Actions CI Workflow**:
-   - Create `.github/workflows/ci.yml` to run:
-     - Python syntax and security linting (`ruff` / `flake8`).
-     - Pytest test execution.
-     - Accuracy verification via [`test_runner.py`](file:///d:/OTHERS/2nd%20year/SentiGuard/test_runner.py).
-2. **Automated Release Packaging**:
-   - Create `.github/workflows/release.yml` triggered on version tags (`v*.*.*`) to bundle the Chrome extension ZIP artifact and model weights.
+### Technical Tasks & Architecture Tally
+1. **GitHub Actions CI Workflow** ✅:
+   - Created [`.github/workflows/ci.yml`](file:///d:/OTHERS/2nd%20year/SentiGuard/.github/workflows/ci.yml) with concurrent run cancellation and two jobs:
+     - **Backend Quality & Tests**:
+       - Python 3.12 runner with `libzbar0` system dependency and pip cache.
+       - Code hygiene & security linting with `ruff check backend/ test_runner.py`.
+       - Test execution via `pytest` over [backend/tests/](file:///d:/OTHERS/2nd%20year/SentiGuard/backend/tests).
+       - Live benchmark accuracy gate via `python test_runner.py 0.95` ensuring accuracy never falls below 95%.
+     - **Frontend Build Verification**:
+       - Node.js 20 runner with npm cache.
+       - Clean dependency install and production bundle build check (`npm run build`).
+2. **Automated Release Packaging** ✅:
+   - Created [`.github/workflows/release.yml`](file:///d:/OTHERS/2nd%20year/SentiGuard/.github/workflows/release.yml) triggered on version tags (`v*.*.*`):
+     - Bundles the Chrome extension into `sentiguard-extension-vX.X.X.zip` for installation.
+     - Archives the serialized model weights (`phishing_model.pkl`).
+     - Publishes a formal GitHub Release via `softprops/action-gh-release@v2` with automated release notes and downloadable assets.
+3. **CI Regression Gate Added to Test Runner** ✅:
+   - Enhanced [`test_runner.py`](file:///d:/OTHERS/2nd%20year/SentiGuard/test_runner.py) to exit with code `0` on passing quality gate or `1` on failure, allowing direct CI pipeline enforcement.
 
 ### Affected Files
-- `.github/workflows/ci.yml` (New)
-- `.github/workflows/release.yml` (New)
+- [`.github/workflows/ci.yml`](file:///d:/OTHERS/2nd%20year/SentiGuard/.github/workflows/ci.yml) (New)
+- [`.github/workflows/release.yml`](file:///d:/OTHERS/2nd%20year/SentiGuard/.github/workflows/release.yml) (New)
+- [`pyproject.toml`](file:///d:/OTHERS/2nd%20year/SentiGuard/pyproject.toml) (New)
+- [`backend/requirements.txt`](file:///d:/OTHERS/2nd%20year/SentiGuard/backend/requirements.txt)
 - [`test_runner.py`](file:///d:/OTHERS/2nd%20year/SentiGuard/test_runner.py)
 
 ### Git Execution Commands
 ```bash
-# 1. Create feature branch
+# 1. Feature branch created
 git checkout -b feature/ci-cd-automation
 
-# 2. Create GitHub Actions workflow directory and file
-mkdir -p .github/workflows
-
-# 3. Create .github/workflows/ci.yml
-# (Define GitHub Actions steps for Python testing and linting)
-
-# 4. Stage, commit and push
-git add .github/
+# 2. Stage, commit and push
+git add .github/ pyproject.toml backend/requirements.txt test_runner.py ROADMAP.md
 git commit -m "ci: add GitHub Actions workflow for linting, testing, and benchmark regression"
 git push -u origin feature/ci-cd-automation
 
-# 5. Merge into main
+# 3. Merge into main
 git checkout main
-git merge --no-ff feature/ci-cd-automation -m "merge: incorporate Phase 5 CI/CD automation"
+git merge --no-ff feature/ci-cd-automation -m "merge: incorporate Phase 5 CI/CD automation and release packaging"
 git push origin main
 
-# 6. Tag the release
+# 4. Tag the release
 git tag -a v2.0.0 -m "Release v2.0.0: Enterprise Threat Intelligence Engine"
 git push origin v2.0.0
 ```

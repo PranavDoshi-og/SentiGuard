@@ -1,0 +1,38 @@
+name: SentiGuard Automated Release Packaging
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Package Extension & Publish Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Package Chrome Extension
+        run: |
+          mkdir -p release-artifacts
+          zip -r "release-artifacts/sentiguard-extension-${{ github.ref_name }}.zip" extension/ -x "extension/.git*"
+
+      - name: Archive Model Weights
+        run: |
+          if [ -f "backend/models/phishing_model.pkl" ]; then
+            cp "backend/models/phishing_model.pkl" "release-artifacts/sentiguard-model-${{ github.ref_name }}.pkl"
+          fi
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-artifacts/*
+          generate_release_notes: true
+          name: "SentiGuard ${{ github.ref_name }}: Enterprise Threat Intelligence"
+          draft: false
+          prerelease: false

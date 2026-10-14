@@ -100,6 +100,55 @@ const decodeQrFromImageFile = async (file) => {
   throw new Error('QR code does not contain a URL.');
 };
 
+export const reportDispute = async ({
+  url,
+  reportType,
+  comment,
+  contactEmail,
+  originalVerdict,
+  originalTrustScore,
+}) => {
+  try {
+    const res = await fetch(`${API_BASE}/scan/report`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url,
+        report_type: reportType,
+        comment: comment || null,
+        contact_email: contactEmail || null,
+        original_verdict: originalVerdict || null,
+        original_trust_score: originalTrustScore !== undefined ? originalTrustScore : null,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Submission failed with status ${res.status}`);
+    }
+
+    return await res.json();
+  } catch (err) {
+    if (err.message.includes('fetch') || err.message.includes('Failed')) {
+      throw new Error('Cannot reach the API. Make sure the backend server is running.');
+    }
+    throw err;
+  }
+};
+
+export const inspectUrl = async (url) => {
+  try {
+    const res = await fetch(`${API_BASE}/scan/inspect?url=${encodeURIComponent(url)}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Inspection failed with status ${res.status}`);
+    }
+    return await res.json();
+  } catch (err) {
+    throw err;
+  }
+};
+
 const loadImageFromFile = (file) => {
   return new Promise((resolve, reject) => {
     const objectUrl = URL.createObjectURL(file);
@@ -118,3 +167,4 @@ const loadImageFromFile = (file) => {
     image.src = objectUrl;
   });
 };
+

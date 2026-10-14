@@ -1,0 +1,19 @@
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+# Select standard Python error and code hygiene rules
+select = ["E", "F", "W"]
+ignore = [
+    "E501",  # Line length
+    "E402",  # Module level import not at top of file (sys.path manipulation)
+    "F401",  # Unused imports in test files or init
+]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+python_files = ["test_*.py"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]

@@ -30,3 +30,8 @@ Pillow==12.2.0
 # ── Utilities ──────────────────────────────────────────────
 pydantic==2.12.5
 python-dotenv==1.0.1
+
+# ── Testing & Code Quality ───────────────────────────────────
+pytest>=8.0.0
+ruff>=0.4.0
+
