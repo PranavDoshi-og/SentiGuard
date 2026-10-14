@@ -210,44 +210,59 @@ git push origin main
 
 ---
 
-## 💻 Phase 4: Frontend Consolidation & Deep Inspector UI (P1)
+## 💻 Phase 4: Frontend Consolidation & Deep Inspector UI (P1) ✅ COMPLETED
 
 ### Objective
-Consolidate the dual frontends ([`website/`](file:///d:/OTHERS/2nd%20year/SentiGuard/website) vs [`frontend/`](file:///d:/OTHERS/2nd%20year/SentiGuard/frontend)), eliminate duplicate code maintenance, and add deep domain inspection cards (WHOIS, GeoIP, ASN, redirect trace).
+Consolidate the dual frontends, eliminate duplicate maintenance, and implement deep domain infrastructure inspection (WHOIS metadata, Hosting/ASN/GeoIP intelligence, HTTP redirect hop tracer, and false-positive dispute workflow).
 
-### Technical Tasks
-1. **Frontend Architecture Unification**:
-   - **Strategy**: Keep [`website/`](file:///d:/OTHERS/2nd%20year/SentiGuard/website) as the static source of truth (zero build step, instant deployment on Vercel/Netlify/FastAPI), and archive the separate React prototype in [`frontend/`](file:///d:/OTHERS/2nd%20year/SentiGuard/frontend).
-2. **Deep Domain Inspector Component**:
-   - Add dedicated sections to [`website/index.html`](file:///d:/OTHERS/2nd%20year/SentiGuard/website/index.html) and [`website/js/app.js`](file:///d:/OTHERS/2nd%20year/SentiGuard/website/js/app.js):
-     - **WHOIS Card**: Registrar, registration date, expiry date.
-     - **Hosting & ASN Card**: Resolved IP address and autonomous system name.
-     - **Redirect Tracer**: Show full path expansion for shortened links (`bit.ly`, `tinyurl.com`).
-3. **Dispute / Report Action**:
-   - Add a *"Report False Positive / Submit Threat"* button in the report utility bar connected to the Phase 2 backend endpoint.
+### Technical Tasks & Architecture Tally
+1. **Frontend Architecture Unification** ✅:
+   - **Tally & Architecture Decision**: In commit `85178c5`, the team unified the frontend into [`frontend/`](file:///d:/OTHERS/2nd%20year/SentiGuard/frontend) (modern React 19 + Tailwind CSS + Vite) and retired/removed the legacy static prototype in `website/`. This enabled interactive SHAP tree explainers, animated HUD optical scanning, and session history state persistence. Both `vercel.json` and `netlify.toml` were re-pointed to build and serve `frontend/`.
+2. **Deep Domain Inspector Component** ✅:
+   - Added [`frontend/src/components/results/DeepInspector.jsx`](file:///d:/OTHERS/2nd%20year/SentiGuard/frontend/src/components/results/DeepInspector.jsx):
+     - **WHOIS Metadata Card**: Registrar name, registration date, expiration date, domain lifespan, authoritative nameservers, ICANN registry status flags (RDAP RFC 7480 query with WHOIS port-43 fallback).
+     - **Hosting & ASN Card**: Primary & all resolved IP addresses (with click-to-copy), Autonomous System Number (ASN) and AS Organization Name (Cymru DNS protocol), BGP CIDR prefix, reverse DNS PTR host, and country code.
+   - Added [`backend/app/services/inspector_service.py`](file:///d:/OTHERS/2nd%20year/SentiGuard/backend/app/services/inspector_service.py) providing cached deep domain profiling and standalone endpoint `GET /api/scan/inspect`.
+3. **HTTP Redirect Tracer** ✅:
+   - Added [`frontend/src/components/results/RedirectTracer.jsx`](file:///d:/OTHERS/2nd%20year/SentiGuard/frontend/src/components/results/RedirectTracer.jsx):
+     - Hop-by-hop HTTP sequence tracer with status code badges (`301 Moved Permanently`, `302 Found`, `307/308`, `200 OK`).
+     - Automatic unmasking and warning alert when URL shorteners (`bit.ly`, `tinyurl.com`, etc.) mask the landing destination.
+4. **Dispute / Threat Report Workflow** ✅:
+   - Added [`frontend/src/components/results/DisputeModal.jsx`](file:///d:/OTHERS/2nd%20year/SentiGuard/frontend/src/components/results/DisputeModal.jsx) connected to `POST /api/scan/report`:
+     - Allows users and analysts to dispute false positives, flag false negatives, or submit new zero-day campaigns.
+     - Prefills URL, original verdict, trust score, and provides dispute category selectors and feedback notifications.
+   - Added *"Dispute / Report"* trigger button in the ResultPanel omnibar utility bar.
 
 ### Affected Files
-- [`website/index.html`](file:///d:/OTHERS/2nd%20year/SentiGuard/website/index.html)
-- [`website/css/style.css`](file:///d:/OTHERS/2nd%20year/SentiGuard/website/css/style.css)
-- [`website/js/app.js`](file:///d:/OTHERS/2nd%20year/SentiGuard/website/js/app.js)
-- [`website/sw.js`](file:///d:/OTHERS/2nd%20year/SentiGuard/website/sw.js)
+- [`backend/app/services/inspector_service.py`](file:///d:/OTHERS/2nd%20year/SentiGuard/backend/app/services/inspector_service.py) (New)
+- [`backend/app/services/scan_service.py`](file:///d:/OTHERS/2nd%20year/SentiGuard/backend/app/services/scan_service.py)
+- [`backend/app/routes/scan.py`](file:///d:/OTHERS/2nd%20year/SentiGuard/backend/app/routes/scan.py)
+- [`backend/tests/test_phase4.py`](file:///d:/OTHERS/2nd%20year/SentiGuard/backend/tests/test_phase4.py) (New)
+- [`frontend/src/services/api.js`](file:///d:/OTHERS/2nd%20year/SentiGuard/frontend/src/services/api.js)
+- [`frontend/src/components/results/DeepInspector.jsx`](file:///d:/OTHERS/2nd%20year/SentiGuard/frontend/src/components/results/DeepInspector.jsx) (New)
+- [`frontend/src/components/results/RedirectTracer.jsx`](file:///d:/OTHERS/2nd%20year/SentiGuard/frontend/src/components/results/RedirectTracer.jsx) (New)
+- [`frontend/src/components/results/DisputeModal.jsx`](file:///d:/OTHERS/2nd%20year/SentiGuard/frontend/src/components/results/DisputeModal.jsx) (New)
+- [`frontend/src/components/results/ResultPanel.jsx`](file:///d:/OTHERS/2nd%20year/SentiGuard/frontend/src/components/results/ResultPanel.jsx)
 
 ### Git Execution Commands
 ```bash
-# 1. Create feature branch
+# 1. Feature branch created
 git checkout -b feature/frontend-deep-inspector
 
-# 2. Implement deep inspection cards and report modal in website/
-# (Edit index.html, style.css, app.js, sw.js)
+# 2. Implement backend deep inspection service & routes
+# 3. Implement frontend DeepInspector, RedirectTracer, and DisputeModal
+# 4. Verify test suite and frontend build
+python backend/tests/test_phase4.py
+npm --prefix frontend run build
 
-# 3. Stage, commit and push
-git add website/
-git commit -m "feat(ui): add WHOIS metadata cards, redirect tracer, and dispute action"
+# 5. Stage, commit and push
+git add backend/ frontend/ ROADMAP.md
+git commit -m "feat(ui): add WHOIS metadata cards, ASN hosting intelligence, redirect tracer, and dispute workflow"
 git push -u origin feature/frontend-deep-inspector
 
-# 4. Merge into main
+# 6. Merge into main
 git checkout main
-git merge --no-ff feature/frontend-deep-inspector -m "merge: incorporate Phase 4 deep inspector UI"
+git merge --no-ff feature/frontend-deep-inspector -m "merge: incorporate Phase 4 deep inspector UI and dispute workflow"
 git push origin main
 ```
 

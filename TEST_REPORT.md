@@ -8,15 +8,15 @@ Evaluated **50** curated URLs against the active **RandomForest** classifier wit
 | 2 | `https://github.com/PranavDoshi-og/SentiGuard` | SAFE | **SAFE** | 100.00% | ✅ | Plain HTTP (Unencrypted) |
 | 3 | `https://www.microsoft.com/en-us/windows` | SAFE | **SAFE** | 100.00% | ✅ | HTTPS Encryption |
 | 4 | `https://en.wikipedia.org/wiki/Cybersecurity` | SAFE | **SAFE** | 75.57% | ✅ | WHOIS Time to Expiry (Days) |
-| 5 | `https://www.apple.com/macbook-pro/` | SAFE | **SAFE** | 75.57% | ✅ | WHOIS Time to Expiry (Days) |
-| 6 | `https://aws.amazon.com/console/` | SAFE | **SAFE** | 86.00% | ✅ | Valid TLS/SSL Certificate |
+| 5 | `https://www.apple.com/macbook-pro/` | SAFE | **PHISHING** | 55.00% | ❌ | WHOIS Time to Expiry (Days) |
+| 6 | `https://aws.amazon.com/console/` | SAFE | **SAFE** | 100.00% | ✅ | Plain HTTP (Unencrypted) |
 | 7 | `https://www.nytimes.com/section/technology` | SAFE | **SAFE** | 75.57% | ✅ | WHOIS Time to Expiry (Days) |
 | 8 | `https://stackoverflow.com/questions/ask` | SAFE | **SAFE** | 75.77% | ✅ | WHOIS Time to Expiry (Days) |
-| 9 | `https://www.python.org/downloads/` | SAFE | **SAFE** | 100.00% | ✅ | Plain HTTP (Unencrypted) |
-| 10 | `https://developer.mozilla.org/en-US/docs/Web/API` | SAFE | **SAFE** | 75.45% | ✅ | WHOIS Time to Expiry (Days) |
+| 9 | `https://www.python.org/downloads/` | SAFE | **SAFE** | 75.50% | ✅ | Mail Exchange (MX) Record Presence |
+| 10 | `https://developer.mozilla.org/en-US/docs/Web/API` | SAFE | **SAFE** | 60.45% | ✅ | WHOIS Time to Expiry (Days) |
 | 11 | `https://www.paypal.com/us/home` | SAFE | **SAFE** | 100.00% | ✅ | HTTPS Encryption |
 | 12 | `https://www.chase.com/` | SAFE | **SAFE** | 99.98% | ✅ | HTTPS Encryption |
-| 13 | `https://www.bankofamerica.com/` | SAFE | **SAFE** | 75.46% | ✅ | WHOIS Time to Expiry (Days) |
+| 13 | `https://www.bankofamerica.com/` | SAFE | **SAFE** | 64.96% | ✅ | WHOIS Time to Expiry (Days) |
 | 14 | `https://www.wellsfargo.com/` | SAFE | **SAFE** | 100.00% | ✅ | Plain HTTP (Unencrypted) |
 | 15 | `https://www.netflix.com/browse` | SAFE | **SAFE** | 100.00% | ✅ | Plain HTTP (Unencrypted) |
 | 16 | `https://www.spotify.com/us/premium/` | SAFE | **SAFE** | 100.00% | ✅ | Plain HTTP (Unencrypted) |
@@ -28,7 +28,7 @@ Evaluated **50** curated URLs against the active **RandomForest** classifier wit
 | 22 | `https://www.salesforce.com/` | SAFE | **SAFE** | 100.00% | ✅ | Plain HTTP (Unencrypted) |
 | 23 | `https://zoom.us/meetings` | SAFE | **SAFE** | 100.00% | ✅ | HTTPS Encryption |
 | 24 | `https://slack.com/workspace-signin` | SAFE | **SAFE** | 99.95% | ✅ | HTTPS Encryption |
-| 25 | `https://www.shopify.com/` | SAFE | **SAFE** | 77.08% | ✅ | WHOIS Time to Expiry (Days) |
+| 25 | `https://www.shopify.com/` | SAFE | **SAFE** | 60.58% | ✅ | WHOIS Time to Expiry (Days) |
 | 26 | `http://192.168.1.1/login/paypal/verify` | PHISHING | **PHISHING** | 100.00% | ✅ | HTTPS Encryption |
 | 27 | `http://paypa1-secure.tk/update-account` | PHISHING | **PHISHING** | 100.00% | ✅ | WHOIS Time to Expiry (Days) |
 | 28 | `http://secure-login-amazon.ml/signin` | PHISHING | **PHISHING** | 100.00% | ✅ | WHOIS Time to Expiry (Days) |
@@ -58,6 +58,6 @@ Evaluated **50** curated URLs against the active **RandomForest** classifier wit
 ## 📊 Summary & Telemetry
 - **Evaluated Classifier:** RandomForest
 - **Total URLs Evaluated:** 50
-- **Correct Predictions:** 50
-- **Overall Accuracy:** **100.00%**
+- **Correct Predictions:** 49
+- **Overall Accuracy:** **98.00%**
 - **Safe URL Precision:** 25/25 (100%)
