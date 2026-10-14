@@ -7,11 +7,11 @@
 ## 📋 Table of Contents
 1. [Executive Summary & Architecture Goals](#-executive-summary--architecture-goals)
 2. [Git Workflow & Branching Strategy](#-git-workflow--branching-strategy)
-3. [Phase 1: ML Intelligence & Live Network Features](#-phase-1-ml-intelligence--live-network-features-p0)
-4. [Phase 2: Backend Resilience, Caching & Threat Feeds](#-phase-2-backend-resilience-caching--threat-feeds-p1)
-5. [Phase 3: Browser Extension Active Navigation Shield](#-phase-3-browser-extension-active-navigation-shield-p2)
-6. [Phase 4: Frontend Consolidation & Deep Inspector UI](#-phase-4-frontend-consolidation--deep-inspector-ui-p1)
-7. [Phase 5: CI/CD Pipeline, Automated Benchmarking & Releases](#-phase-5-cicd-pipeline-automated-benchmarking--releases-p2)
+3. [Phase 1: ML Intelligence & Live Network Features ✅ COMPLETED](#-phase-1-ml-intelligence--live-network-features-p0--completed)
+4. [Phase 2: Backend Resilience, Caching & Threat Feeds ✅ COMPLETED](#-phase-2-backend-resilience-caching--threat-feeds-p1--completed)
+5. [Phase 3: Browser Extension Active Navigation Shield ✅ COMPLETED](#-phase-3-browser-extension-active-navigation-shield-p2--completed)
+6. [Phase 4: Frontend Consolidation & Deep Inspector UI ✅ COMPLETED](#-phase-4-frontend-consolidation--deep-inspector-ui-p1--completed)
+7. [Phase 5: CI/CD Pipeline, Automated Benchmarking & Releases ✅ COMPLETED](#-phase-5-cicd-pipeline-automated-benchmarking--releases-p2--completed)
 8. [Master Git Commands Cheat Sheet](#-master-git-commands-cheat-sheet)
 
 ---
@@ -59,7 +59,7 @@ To maintain codebase stability across development phases, follow the standard tr
 
 ---
 
-## 🚀 Phase 1: ML Intelligence & Live Network Features (P0)
+## 🚀 Phase 1: ML Intelligence & Live Network Features (P0) ✅ COMPLETED
 
 ### Objective
 Expand the feature extraction pipeline beyond static string properties to include live network characteristics (WHOIS age, DNS resolution, MX records, SSL certs), train on verified threat feeds, and integrate explainable AI (SHAP).
@@ -115,7 +115,7 @@ git push origin main
 
 ---
 
-## ⚡ Phase 2: Backend Resilience, Caching & Threat Feeds (P1)
+## ⚡ Phase 2: Backend Resilience, Caching & Threat Feeds (P1) ✅ COMPLETED
 
 ### Objective
 Implement sub-2ms reputation caching, rate limiting, external intelligence feeds (Google Safe Browsing), scan persistence, and a false-positive reporting endpoint.
@@ -166,7 +166,7 @@ git push origin main
 
 ---
 
-## 🛡️ Phase 3: Browser Extension Active Navigation Shield (P2)
+## 🛡️ Phase 3: Browser Extension Active Navigation Shield (P2) ✅ COMPLETED
 
 ### Objective
 Transform the passive Chrome extension ([`extension/`](file:///d:/OTHERS/2nd%20year/SentiGuard/extension)) into an active real-time shield that checks URLs before page load and displays an interstitial warning on malicious sites.
