@@ -7,11 +7,15 @@ import {
   Copy,
   Check,
   Zap,
+  Flag,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { motion } from 'framer-motion';
 import NetworkProfileCard from './NetworkProfileCard';
+import DeepInspector from './DeepInspector';
+import RedirectTracer from './RedirectTracer';
+import DisputeModal from './DisputeModal';
 import ShapExplanations from './ShapExplanations';
 import HeuristicMatrix from './HeuristicMatrix';
 
@@ -48,6 +52,7 @@ function AnimatedNumber({ value }) {
 export default function ResultPanel({ result }) {
   const panelRef = useRef(null);
   const [copied, setCopied] = useState(false);
+  const [isDisputeOpen, setIsDisputeOpen] = useState(false);
 
   useEffect(() => {
     if (result && panelRef.current) {
@@ -168,6 +173,14 @@ export default function ResultPanel({ result }) {
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               )}
+              <button
+                onClick={() => setIsDisputeOpen(true)}
+                className="hover:text-cyan-300 p-1 rounded-lg transition-all text-slate-400 flex items-center gap-1.5 text-[11px] font-mono border border-white/10 bg-white/5 hover:bg-cyan-950/40 hover:border-cyan-500/30 ml-1 px-2.5 py-1"
+                title="Report False Positive or Submit Threat"
+              >
+                <Flag className="w-3 h-3 text-cyan-400" />
+                <span className="hidden sm:inline font-semibold">Dispute / Report</span>
+              </button>
             </div>
           </div>
         </div>
@@ -234,18 +247,31 @@ export default function ResultPanel({ result }) {
         </div>
       )}
 
-      {/* ── 4. Live Network Profile Card ─────────────────────── */}
+      {/* ── 4. HTTP Redirect Tracer ─────────────────────────── */}
+      <RedirectTracer redirectTrace={result.redirect_trace} initialUrl={result.url} />
+
+      {/* ── 5. Live Network Profile Card ─────────────────────── */}
       <NetworkProfileCard networkProfile={result.network_profile} url={result.url} />
 
-      {/* ── 5. SHAP Tree Explainer ───────────────────────────── */}
+      {/* ── 6. Deep Domain & Infrastructure Inspector ────────── */}
+      <DeepInspector deepInspector={result.deep_inspector} networkProfile={result.network_profile} />
+
+      {/* ── 7. SHAP Tree Explainer ───────────────────────────── */}
       <ShapExplanations
         shapExplanations={result.shap_explanations}
         modelType={result.model_type}
         features={result.features}
       />
 
-      {/* ── 6. Heuristic Matrix ─────────────────────────────── */}
+      {/* ── 8. Heuristic Matrix ─────────────────────────────── */}
       <HeuristicMatrix features={result.features} />
+
+      {/* ── 9. Community Dispute Modal ──────────────────────── */}
+      <DisputeModal
+        isOpen={isDisputeOpen}
+        onClose={() => setIsDisputeOpen(false)}
+        scanResult={result}
+      />
     </motion.div>
   );
 }

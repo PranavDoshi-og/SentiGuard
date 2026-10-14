@@ -17,6 +17,7 @@ from app.ml.predictor import PhishingPredictor
 from app.ml.feature_extractor import extract_features
 from app.services.cache_service import reputation_cache
 from app.services.threat_feeds import threat_feeds_service
+from app.services.inspector_service import inspector_service
 from app.db.models import ScanRecord, DisputeReport
 from app.utils.logger import setup_logger
 
@@ -28,15 +29,17 @@ class ScanService:
         self.predictor = PhishingPredictor()
         self.cache = reputation_cache
         self.threat_feeds = threat_feeds_service
+        self.inspector = inspector_service
 
     def scan_url(self, url: str, bypass_cache: bool = False) -> dict[str, Any]:
         """
-        Full Phase 2 pipeline:
+        Full Phase 4 pipeline:
         1. Check reputation cache (sub-2ms)
         2. Feature extraction (lexical + live network)
         3. ML prediction with SHAP explanations
         4. External intelligence verification (Google Safe Browsing / Cloudflare)
-        5. Store in cache & return
+        5. Deep Domain Inspection (WHOIS, Hosting & ASN, HTTP Redirect Chain)
+        6. Store in cache & return
         """
         # 1. Reputation Cache Check
         if not bypass_cache:
@@ -61,21 +64,42 @@ class ScanService:
         # 4. Multi-Engine External Threat Feeds
         feed_intel = self.threat_feeds.check_url(url)
         if feed_intel.get("is_flagged"):
-            # External threat engine detected high-confidence malicious activity
             verdict = "PHISHING"
             trust_score = 0.0
             confidence = 1.0
             for detail in feed_intel.get("details", []):
                 risk_factors.insert(0, f"🚨 {detail}")
 
+        # 5. Deep Domain Inspection & Redirect Tracer
+        deep_intel = self.inspector.inspect_full(url)
+        if deep_intel["redirect_trace"].get("has_shortener_hop"):
+            if not any("shortener" in rf.lower() for rf in risk_factors):
+                risk_factors.append("URL Shortener intermediary detected – hides true landing destination")
+
+        whois_data = deep_intel.get("whois", {})
+        hosting_data = deep_intel.get("hosting_asn", {})
+
+        domain_age = whois_data.get("domain_age_days")
+        if domain_age is None or domain_age < 0:
+            domain_age = features.get("domain_age_days", -1.0)
+
+        time_to_expiry = whois_data.get("time_to_expiry_days")
+        if time_to_expiry is None or time_to_expiry < 0:
+            time_to_expiry = features.get("time_to_expiry_days", -1.0)
+
         network_profile = {
             "has_dns_a_record": bool(features.get("has_dns_a_record", 0.0) > 0),
             "has_dns_mx_record": bool(features.get("has_dns_mx_record", 0.0) > 0),
-            "domain_age_days": features.get("domain_age_days", -1.0),
-            "time_to_expiry_days": features.get("time_to_expiry_days", -1.0),
+            "domain_age_days": domain_age,
+            "time_to_expiry_days": time_to_expiry,
             "has_valid_ssl": bool(features.get("has_valid_ssl", 0.0) > 0),
             "ssl_days_to_expiry": features.get("ssl_days_to_expiry", -1.0),
             "is_free_ssl_issuer": bool(features.get("is_free_ssl_issuer", 0.0) > 0),
+            "registrar": whois_data.get("registrar"),
+            "primary_ip": hosting_data.get("primary_ip"),
+            "asn": hosting_data.get("asn"),
+            "as_name": hosting_data.get("as_name"),
+            "country": hosting_data.get("country"),
         }
 
         result = {
@@ -88,6 +112,11 @@ class ScanService:
             "shap_explanations": prediction.get("shap_explanations", []),
             "model_type": prediction.get("model_type", "Unknown"),
             "network_profile": network_profile,
+            "deep_inspector": {
+                "whois": whois_data,
+                "hosting_asn": hosting_data,
+            },
+            "redirect_trace": deep_intel.get("redirect_trace", {}),
             "external_intelligence": {
                 "flagged": feed_intel.get("is_flagged", False),
                 "sources": feed_intel.get("sources", []),
@@ -96,7 +125,7 @@ class ScanService:
             "cached": False,
         }
 
-        # 5. Populate Reputation Cache
+        # 6. Populate Reputation Cache
         self.cache.set(url, result)
         return result
 

@@ -53,6 +53,8 @@ class ScanResponse(BaseModel):
     model_type: str = "ML Classifier"
     network_profile: dict[str, Any] = {}
     external_intelligence: dict[str, Any] = {}
+    deep_inspector: dict[str, Any] | None = None
+    redirect_trace: dict[str, Any] | None = None
     cached: bool = False
     cache_latency_ms: float | None = None
     qr_extracted_url: str | None = None
@@ -292,3 +294,24 @@ async def get_recent_reports(limit: int = 50, db: Session = Depends(get_db)):
         }
         for r in reports
     ]
+
+
+@router.get("/scan/inspect")
+async def inspect_url(url: str):
+    """
+    On-demand deep domain infrastructure inspection:
+    WHOIS metadata, Hosting/ASN intelligence, and HTTP redirect tracer.
+    """
+    url = url.strip()
+    if not url:
+        raise HTTPException(status_code=400, detail="URL cannot be empty.")
+    if not is_valid_url(url):
+        raise HTTPException(status_code=400, detail="Invalid URL format.")
+
+    from app.services.inspector_service import inspector_service
+    try:
+        return inspector_service.inspect_full(url)
+    except Exception as e:
+        logger.error(f"Error inspecting URL '{url}': {e}")
+        raise HTTPException(status_code=500, detail=f"Inspection failed: {str(e)}")
+

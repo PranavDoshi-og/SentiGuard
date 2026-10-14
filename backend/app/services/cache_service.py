@@ -77,7 +77,7 @@ class ReputationCache:
         redis_url = os.getenv("REDIS_URL")
         if redis_url:
             try:
-                import redis
+                import redis  # pyrefly: ignore [missing-import] # type: ignore
                 self._redis_client = redis.from_url(redis_url, socket_timeout=2.0)
                 self._redis_client.ping()
                 self._backend = "redis"
