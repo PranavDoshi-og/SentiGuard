@@ -268,47 +268,53 @@ git push origin main
 
 ---
 
-## ⚙️ Phase 5: CI/CD Pipeline, Automated Benchmarking & Releases (P2)
+## ⚙️ Phase 5: CI/CD Pipeline, Automated Benchmarking & Releases (P2) ✅ COMPLETED
 
 ### Objective
 Establish automated GitHub Actions workflows for continuous integration, code formatting, security linting, test suite execution, and model release tagging.
 
-### Technical Tasks
-1. **GitHub Actions CI Workflow**:
-   - Create `.github/workflows/ci.yml` to run:
-     - Python syntax and security linting (`ruff` / `flake8`).
-     - Pytest test execution.
-     - Accuracy verification via [`test_runner.py`](file:///d:/OTHERS/2nd%20year/SentiGuard/test_runner.py).
-2. **Automated Release Packaging**:
-   - Create `.github/workflows/release.yml` triggered on version tags (`v*.*.*`) to bundle the Chrome extension ZIP artifact and model weights.
+### Technical Tasks & Architecture Tally
+1. **GitHub Actions CI Workflow** ✅:
+   - Created [`.github/workflows/ci.yml`](file:///d:/OTHERS/2nd%20year/SentiGuard/.github/workflows/ci.yml) with concurrent run cancellation and two jobs:
+     - **Backend Quality & Tests**:
+       - Python 3.12 runner with `libzbar0` system dependency and pip cache.
+       - Code hygiene & security linting with `ruff check backend/ test_runner.py`.
+       - Test execution via `pytest` over [backend/tests/](file:///d:/OTHERS/2nd%20year/SentiGuard/backend/tests).
+       - Live benchmark accuracy gate via `python test_runner.py 0.95` ensuring accuracy never falls below 95%.
+     - **Frontend Build Verification**:
+       - Node.js 20 runner with npm cache.
+       - Clean dependency install and production bundle build check (`npm run build`).
+2. **Automated Release Packaging** ✅:
+   - Created [`.github/workflows/release.yml`](file:///d:/OTHERS/2nd%20year/SentiGuard/.github/workflows/release.yml) triggered on version tags (`v*.*.*`):
+     - Bundles the Chrome extension into `sentiguard-extension-vX.X.X.zip` for installation.
+     - Archives the serialized model weights (`phishing_model.pkl`).
+     - Publishes a formal GitHub Release via `softprops/action-gh-release@v2` with automated release notes and downloadable assets.
+3. **CI Regression Gate Added to Test Runner** ✅:
+   - Enhanced [`test_runner.py`](file:///d:/OTHERS/2nd%20year/SentiGuard/test_runner.py) to exit with code `0` on passing quality gate or `1` on failure, allowing direct CI pipeline enforcement.
 
 ### Affected Files
-- `.github/workflows/ci.yml` (New)
-- `.github/workflows/release.yml` (New)
+- [`.github/workflows/ci.yml`](file:///d:/OTHERS/2nd%20year/SentiGuard/.github/workflows/ci.yml) (New)
+- [`.github/workflows/release.yml`](file:///d:/OTHERS/2nd%20year/SentiGuard/.github/workflows/release.yml) (New)
+- [`pyproject.toml`](file:///d:/OTHERS/2nd%20year/SentiGuard/pyproject.toml) (New)
+- [`backend/requirements.txt`](file:///d:/OTHERS/2nd%20year/SentiGuard/backend/requirements.txt)
 - [`test_runner.py`](file:///d:/OTHERS/2nd%20year/SentiGuard/test_runner.py)
 
 ### Git Execution Commands
 ```bash
-# 1. Create feature branch
+# 1. Feature branch created
 git checkout -b feature/ci-cd-automation
 
-# 2. Create GitHub Actions workflow directory and file
-mkdir -p .github/workflows
-
-# 3. Create .github/workflows/ci.yml
-# (Define GitHub Actions steps for Python testing and linting)
-
-# 4. Stage, commit and push
-git add .github/
+# 2. Stage, commit and push
+git add .github/ pyproject.toml backend/requirements.txt test_runner.py ROADMAP.md
 git commit -m "ci: add GitHub Actions workflow for linting, testing, and benchmark regression"
 git push -u origin feature/ci-cd-automation
 
-# 5. Merge into main
+# 3. Merge into main
 git checkout main
-git merge --no-ff feature/ci-cd-automation -m "merge: incorporate Phase 5 CI/CD automation"
+git merge --no-ff feature/ci-cd-automation -m "merge: incorporate Phase 5 CI/CD automation and release packaging"
 git push origin main
 
-# 6. Tag the release
+# 4. Tag the release
 git tag -a v2.0.0 -m "Release v2.0.0: Enterprise Threat Intelligence Engine"
 git push origin v2.0.0
 ```

@@ -96,7 +96,7 @@ def run_tests():
     print(f" Evaluation Complete: {accuracy:.2%} Accuracy ({correct_count}/{total} Passed)", flush=True)
     print("=" * 70, flush=True)
 
-    results_md += f"\n## 📊 Summary & Telemetry\n"
+    results_md += "\n## 📊 Summary & Telemetry\n"
     results_md += f"- **Evaluated Classifier:** {model_name}\n"
     results_md += f"- **Total URLs Evaluated:** {total}\n"
     results_md += f"- **Correct Predictions:** {correct_count}\n"
@@ -108,6 +108,21 @@ def run_tests():
         f.write(results_md)
 
     print(f"\nDetailed evaluation report saved to {report_path.name}\n", flush=True)
+
+    # Automated CI/CD Regression Quality Gate
+    min_accuracy = float(os.getenv("MIN_ACCURACY", "0.95"))
+    if len(sys.argv) > 1:
+        try:
+            min_accuracy = float(sys.argv[1])
+        except ValueError:
+            pass
+
+    if accuracy < min_accuracy:
+        print(f"❌ Quality Gate FAILED: Accuracy {accuracy:.2%} is below required {min_accuracy:.2%}\n")
+        sys.exit(1)
+    else:
+        print(f"✅ Quality Gate PASSED: Accuracy {accuracy:.2%} meets minimum threshold (≥{min_accuracy:.2%})\n")
+        sys.exit(0)
 
 
 if __name__ == "__main__":
