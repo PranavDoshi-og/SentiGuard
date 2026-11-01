@@ -69,6 +69,33 @@ export const scanQr = async (file) => {
   }
 };
 
+export const scanVisual = async (file, originUrl = '') => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (originUrl && originUrl.trim()) {
+      formData.append('origin_url', originUrl.trim());
+    }
+
+    const res = await fetch(`${API_BASE}/scan/visual`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Server error: ${res.status}`);
+    }
+
+    return await res.json();
+  } catch (err) {
+    if (err.message.includes('fetch') || err.message.includes('Failed')) {
+      throw new Error('Cannot reach the API. Make sure the backend server is running on port 8000.');
+    }
+    throw err;
+  }
+};
+
 const decodeQrFromImageFile = async (file) => {
   if (!jsQR) {
     throw new Error('QR decoding library is not available in the browser.');

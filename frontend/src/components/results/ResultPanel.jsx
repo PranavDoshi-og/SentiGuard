@@ -18,6 +18,7 @@ import RedirectTracer from './RedirectTracer';
 import DisputeModal from './DisputeModal';
 import ShapExplanations from './ShapExplanations';
 import HeuristicMatrix from './HeuristicMatrix';
+import VisualResultCard from './VisualResultCard';
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -152,8 +153,8 @@ export default function ResultPanel({ result }) {
 
             {/* Target URL Omnibar */}
             <div className="inline-flex items-center gap-2 max-w-full bg-slate-950/80 text-slate-300 font-mono text-xs px-3.5 py-2 rounded-xl border border-slate-800 shadow-inner mt-1">
-              <span className="truncate max-w-[320px] sm:max-w-[480px]" title={result.url}>
-                {result.url}
+              <span className="truncate max-w-[320px] sm:max-w-[480px]" title={result.url || "Visual Media Target"}>
+                {result.url || (result.image_metadata ? `Visual Scan (${result.image_metadata.format} ${result.image_metadata.width}x${result.image_metadata.height})` : "Media Scan Target")}
               </span>
               <button
                 onClick={handleCopyUrl}
@@ -247,24 +248,33 @@ export default function ResultPanel({ result }) {
         </div>
       )}
 
-      {/* ── 4. HTTP Redirect Tracer ─────────────────────────── */}
-      <RedirectTracer redirectTrace={result.redirect_trace} initialUrl={result.url} />
+      {/* ── 4. Visual Media & Brand Forensics (Phase 1) ─────── */}
+      <VisualResultCard result={result} />
 
-      {/* ── 5. Live Network Profile Card ─────────────────────── */}
-      <NetworkProfileCard networkProfile={result.network_profile} url={result.url} />
+      {/* ── 5. HTTP Redirect Tracer ─────────────────────────── */}
+      {result.url && <RedirectTracer redirectTrace={result.redirect_trace} initialUrl={result.url} />}
 
-      {/* ── 6. Deep Domain & Infrastructure Inspector ────────── */}
-      <DeepInspector deepInspector={result.deep_inspector} networkProfile={result.network_profile} />
+      {/* ── 6. Live Network Profile Card ─────────────────────── */}
+      {result.network_profile && Object.keys(result.network_profile).length > 0 && (
+        <NetworkProfileCard networkProfile={result.network_profile} url={result.url} />
+      )}
 
-      {/* ── 7. SHAP Tree Explainer ───────────────────────────── */}
-      <ShapExplanations
-        shapExplanations={result.shap_explanations}
-        modelType={result.model_type}
-        features={result.features}
-      />
+      {/* ── 7. Deep Domain & Infrastructure Inspector ────────── */}
+      {result.deep_inspector && (
+        <DeepInspector deepInspector={result.deep_inspector} networkProfile={result.network_profile} />
+      )}
 
-      {/* ── 8. Heuristic Matrix ─────────────────────────────── */}
-      <HeuristicMatrix features={result.features} />
+      {/* ── 8. SHAP Tree Explainer ───────────────────────────── */}
+      {result.features && (
+        <ShapExplanations
+          shapExplanations={result.shap_explanations}
+          modelType={result.model_type}
+          features={result.features}
+        />
+      )}
+
+      {/* ── 9. Heuristic Matrix ─────────────────────────────── */}
+      {result.features && <HeuristicMatrix features={result.features} />}
 
       {/* ── 9. Community Dispute Modal ──────────────────────── */}
       <DisputeModal

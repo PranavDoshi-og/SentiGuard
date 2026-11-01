@@ -9,11 +9,12 @@ import os
 import shutil
 import tempfile
 from typing import Any
-from fastapi import APIRouter, HTTPException, UploadFile, File, Request, Response, Depends, BackgroundTasks
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Request, Response, Depends, BackgroundTasks
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 
 from app.services.scan_service import ScanService
+from app.services.visual_service import visual_service
 from app.services.cache_service import reputation_cache
 from app.utils.logger import setup_logger
 from app.utils.validators import is_valid_url
@@ -58,6 +59,19 @@ class ScanResponse(BaseModel):
     cached: bool = False
     cache_latency_ms: float | None = None
     qr_extracted_url: str | None = None
+
+
+class VisualScanResponse(BaseModel):
+    verdict: str
+    trust_score: float
+    confidence: float
+    risk_factors: list[str]
+    image_metadata: dict[str, Any]
+    brand_analysis: dict[str, Any]
+    urgency_analysis: dict[str, Any]
+    extracted_entities: dict[str, Any]
+    extracted_urls_scans: list[dict[str, Any]]
+    raw_text_snippet: str
 
 
 class DisputeReportRequest(BaseModel):
@@ -187,6 +201,46 @@ async def scan_qr(
     except Exception as e:
         logger.error(f"QR scan error: {e}")
         raise HTTPException(status_code=500, detail=f"QR scan failed: {str(e)}")
+    finally:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+
+
+@router.post("/scan/visual", response_model=VisualScanResponse)
+@limiter.limit("20/minute")
+async def scan_visual(
+    request: Request,
+    response: Response,
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    origin_url: str | None = Form(default=None),
+    db: Session = Depends(get_db),
+):
+    """
+    Upload visual media (screenshot, receipt, email image), perform OCR,
+    detect brand impersonation, urgency/extortion indicators, and scan extracted URLs.
+    """
+    allowed_types = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type: {file.content_type}. Use JPEG, PNG, or WebP."
+        )
+
+    suffix = os.path.splitext(file.filename or "")[-1] or ".png"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        shutil.copyfileobj(file.file, tmp)
+        tmp_path = tmp.name
+
+    try:
+        result = visual_service.inspect_image(tmp_path, origin_url=origin_url)
+        logger.info(f"Visual Scan: verdict={result['verdict']} trust={result['trust_score']}")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Visual scan error: {e}")
+        raise HTTPException(status_code=500, detail=f"Visual inspection failed: {str(e)}")
     finally:
         if os.path.exists(tmp_path):
             os.unlink(tmp_path)

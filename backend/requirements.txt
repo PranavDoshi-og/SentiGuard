@@ -23,9 +23,11 @@ pandas==3.0.2
 python-whois>=0.9.4
 dnspython>=2.6.0
 
-# ── QR Scanning ────────────────────────────────────────────
+# ── QR & Visual Phishing Scanning ──────────────────────────
 pyzbar==0.1.9
 Pillow==12.2.0
+pytesseract>=0.3.10
+rapidfuzz>=3.9.0
 
 # ── Utilities ──────────────────────────────────────────────
 pydantic==2.12.5
@@ -34,4 +36,3 @@ python-dotenv==1.0.1
 # ── Testing & Code Quality ───────────────────────────────────
 pytest>=8.0.0
 ruff>=0.4.0
-

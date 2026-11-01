@@ -81,6 +81,7 @@ def root():
             "health": "/api/health",
             "scan_url": "/api/scan/url",
             "scan_qr": "/api/scan/qr",
+            "scan_visual": "/api/scan/visual",
             "report_dispute": "/api/scan/report",
             "cache_stats": "/api/scan/cache/stats",
             "telemetry_stats": "/api/scan/stats",

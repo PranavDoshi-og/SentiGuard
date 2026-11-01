@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import Hero from '../layout/Hero';
 import UrlScanner from '../scanner/UrlScanner';
 import QrScanner from '../scanner/QrScanner';
+import VisualScanner from '../scanner/VisualScanner';
 import ResultPanel from '../results/ResultPanel';
 import AuditLog from '../history/AuditLog';
-import { scanUrl, scanQr } from '../../services/api';
-import { Link2, QrCode, AlertCircle } from 'lucide-react';
+import { scanUrl, scanQr, scanVisual } from '../../services/api';
+import { Link2, QrCode, AlertCircle, Image as ImageIcon } from 'lucide-react';
 import { cn } from '../results/ResultPanel';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -31,9 +32,14 @@ export default function Dashboard() {
   }, []);
 
   const saveToHistory = (scanData) => {
-    if (!scanData || !scanData.url) return;
+    if (!scanData) return;
+    const displayLabel = scanData.url || (
+      scanData.brand_analysis?.detected_brands?.length 
+        ? `Visual: ${scanData.brand_analysis.detected_brands.join(', ')}` 
+        : (scanData.image_metadata ? `Visual Scan (${scanData.image_metadata.format})` : 'Visual Phishing')
+    );
     const entry = {
-      url: scanData.url,
+      url: displayLabel,
       verdict: scanData.verdict,
       trust_score: scanData.trust_score,
       confidence: scanData.confidence,
@@ -73,8 +79,10 @@ export default function Dashboard() {
           finalUrl = `https://${finalUrl}`;
         }
         data = await scanUrl(finalUrl);
-      } else {
+      } else if (type === 'qr') {
         data = await scanQr(input);
+      } else if (type === 'visual') {
+        data = await scanVisual(input.file, input.originUrl);
       }
       setResult(data);
       saveToHistory(data);
@@ -99,7 +107,7 @@ export default function Dashboard() {
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.15 }}
-        className="flex bg-slate-900/70 backdrop-blur-xl border border-white/10 p-1.5 rounded-2xl mb-8 shadow-[0_0_30px_rgba(0,0,0,0.5)] relative z-20 max-w-sm mx-auto"
+        className="flex bg-slate-900/70 backdrop-blur-xl border border-white/10 p-1.5 rounded-2xl mb-8 shadow-[0_0_30px_rgba(0,0,0,0.5)] relative z-20 max-w-xl mx-auto"
       >
         <button
           onClick={() => {
@@ -137,7 +145,26 @@ export default function Dashboard() {
               transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             />
           )}
-          <QrCode className="w-4 h-4" /> QR Optical Scanner
+          <QrCode className="w-4 h-4" /> QR Scanner
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab('visual');
+            setError(null);
+          }}
+          className={cn(
+            'relative flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold tracking-wide transition-colors z-10',
+            activeTab === 'visual' ? 'text-white' : 'text-slate-400 hover:text-white'
+          )}
+        >
+          {activeTab === 'visual' && (
+            <motion.div
+              layoutId="activeTab"
+              className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-500 rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.4)] -z-10"
+              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            />
+          )}
+          <ImageIcon className="w-4 h-4" /> Visual Phishing & OCR
         </button>
       </motion.div>
 
@@ -154,7 +181,7 @@ export default function Dashboard() {
             >
               <UrlScanner onScan={(url) => handleScan(url, 'url')} isLoading={isLoading} />
             </motion.div>
-          ) : (
+          ) : activeTab === 'qr' ? (
             <motion.div
               key="qr"
               initial={{ opacity: 0, x: 15 }}
@@ -163,6 +190,16 @@ export default function Dashboard() {
               transition={{ duration: 0.25 }}
             >
               <QrScanner onScan={(payload, type) => handleScan(payload, type)} isLoading={isLoading} />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="visual"
+              initial={{ opacity: 0, x: 15 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -15 }}
+              transition={{ duration: 0.25 }}
+            >
+              <VisualScanner onScan={(payload, type) => handleScan(payload, type)} isLoading={isLoading} />
             </motion.div>
           )}
         </AnimatePresence>
