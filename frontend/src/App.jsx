@@ -2,10 +2,14 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import Dashboard from './components/pages/Dashboard';
+import LandingPage from './components/landing/LandingPage';
 import { checkHealth } from './services/api';
+import { AnimatePresence, motion } from 'framer-motion';
 
 function App() {
   const [apiStatus, setApiStatus] = useState('connecting');
+  const [currentView, setCurrentView] = useState('landing'); // 'landing' | 'scanner'
+  const [activeScannerTab, setActiveScannerTab] = useState('url');
 
   useEffect(() => {
     let mounted = true;
@@ -24,6 +28,18 @@ function App() {
     };
   }, []);
 
+  const handleLaunchConsole = (tab = 'url') => {
+    const resolvedTab = tab === 'deepfake' ? 'synthetic' : tab;
+    setActiveScannerTab(resolvedTab);
+    setCurrentView('scanner');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBackToOverview = () => {
+    setCurrentView('landing');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden bg-[#070a0f] text-slate-100">
       {/* Precision technical background grid */}
@@ -38,8 +54,47 @@ function App() {
       />
       
       <div className="relative z-10 flex flex-col min-h-screen">
-        <Navbar apiStatus={apiStatus} />
-        <Dashboard />
+        <Navbar 
+          apiStatus={apiStatus} 
+          currentView={currentView}
+          onViewChange={(view) => {
+            if (view === 'scanner') handleLaunchConsole('url');
+            else handleBackToOverview();
+          }}
+        />
+
+        <main className="flex-1">
+          <AnimatePresence mode="wait">
+            {currentView === 'landing' ? (
+              <motion.div
+                key="landing"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.3 }}
+              >
+                <LandingPage 
+                  onLaunchConsole={() => handleLaunchConsole('url')}
+                  onSelectEngine={(tab) => handleLaunchConsole(tab)}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="scanner"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Dashboard 
+                  initialTab={activeScannerTab} 
+                  onBackToOverview={handleBackToOverview} 
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </main>
+
         <Footer />
       </div>
     </div>

@@ -8,14 +8,20 @@ import DocumentScanner from '../scanner/DocumentScanner';
 import ResultPanel from '../results/ResultPanel';
 import AuditLog from '../history/AuditLog';
 import { scanUrl, scanQr, scanVisual, scanSynthetic, scanDocument } from '../../services/api';
-import { Link2, QrCode, AlertCircle, Image as ImageIcon, Bot, FileText } from 'lucide-react';
+import { Link2, QrCode, AlertCircle, Image as ImageIcon, Bot, FileText, ChevronLeft } from 'lucide-react';
 import { cn } from '../results/ResultPanel';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const STORAGE_KEY = 'sentiguard_session_history';
 
-export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState('url');
+export default function Dashboard({ initialTab = 'url', onBackToOverview }) {
+  const [activeTab, setActiveTab] = useState(initialTab || 'url');
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
@@ -114,6 +120,20 @@ export default function Dashboard() {
 
   return (
     <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 pb-32 relative">
+      {onBackToOverview && (
+        <div className="pt-4 pb-2 flex items-center justify-between">
+          <button
+            onClick={onBackToOverview}
+            className="inline-flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-cyan-400 transition-colors cursor-pointer bg-white/[0.03] border border-white/5 hover:border-cyan-500/30 px-3 py-1.5 rounded-lg"
+          >
+            <ChevronLeft className="w-3.5 h-3.5 text-cyan-400" />
+            <span>← Return to Platform Overview</span>
+          </button>
+          <span className="text-[11px] font-mono text-cyan-400/80 bg-cyan-950/40 border border-cyan-500/20 px-2.5 py-0.5 rounded uppercase tracking-wider">
+            SOC INTELLIGENCE CONSOLE
+          </span>
+        </div>
+      )}
       <Hero />
 
       {/* Animated Tab Switcher */}
