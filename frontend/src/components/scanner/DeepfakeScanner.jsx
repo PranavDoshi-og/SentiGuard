@@ -145,3 +145,4 @@ export default function DeepfakeScanner({ onScan, isLoading }) {
     </motion.div>
   );
 }
+

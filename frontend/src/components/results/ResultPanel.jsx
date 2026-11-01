@@ -66,9 +66,19 @@ export default function ResultPanel({ result }) {
 
   if (!result) return null;
 
-  const isSafe = result.verdict === 'SAFE';
+  const isSafe = result.verdict === 'SAFE' || result.verdict === 'AUTHENTIC_MEDIA';
+  const isSuspicious = result.verdict === 'SUSPICIOUS';
+  const isThreat = result.verdict === 'PHISHING' || result.verdict === 'AI_GENERATED';
   const confidencePercent = Math.round((typeof result.confidence === 'number' ? result.confidence : 0) * 100);
-  const trustScore = typeof result.trust_score === 'number' && !isNaN(result.trust_score) ? result.trust_score : (typeof result.authenticity_score === 'number' ? result.authenticity_score : (isSafe ? 90 : 10));
+  const trustScore = typeof result.trust_score === 'number' && !isNaN(result.trust_score) 
+    ? result.trust_score 
+    : (typeof result.authenticity_score === 'number' ? result.authenticity_score : (isSafe ? 90 : 10));
+
+  const verdictTitle = isSafe
+    ? (result.synthetic_probability !== undefined ? 'AUTHENTIC PHOTOGRAPHIC MEDIA' : 'VERIFIED SAFE')
+    : isSuspicious
+    ? (result.synthetic_probability !== undefined ? 'SUSPICIOUS / INCONCLUSIVE ARTIFACTS' : 'SUSPICIOUS SECURITY PROFILE')
+    : (result.synthetic_probability !== undefined ? 'AI SYNTHETIC MEDIA DETECTED' : 'MALICIOUS THREAT DETECTED');
 
   const handleCopyUrl = () => {
     if (result.url) {
@@ -91,7 +101,7 @@ export default function ResultPanel({ result }) {
       <div
         className={cn(
           'absolute top-0 left-1/2 -translate-x-1/2 w-4/5 h-40 blur-[120px] pointer-events-none -z-10',
-          isSafe ? 'bg-emerald-500/20' : 'bg-rose-500/25'
+          isSafe ? 'bg-emerald-500/20' : isSuspicious ? 'bg-amber-500/20' : 'bg-rose-500/25'
         )}
       />
 
@@ -99,7 +109,7 @@ export default function ResultPanel({ result }) {
       <div
         className={cn(
           'relative px-8 py-10 border-b border-white/10 overflow-hidden',
-          isSafe ? 'bg-emerald-950/20' : 'bg-rose-950/25'
+          isSafe ? 'bg-emerald-950/20' : isSuspicious ? 'bg-amber-950/20' : 'bg-rose-950/25'
         )}
       >
         <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6 text-center md:text-left">
@@ -111,11 +121,15 @@ export default function ResultPanel({ result }) {
               'p-4 rounded-2xl shadow-2xl backdrop-blur-xl border border-white/20 shrink-0',
               isSafe
                 ? 'bg-emerald-500/20 text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.3)]'
+                : isSuspicious
+                ? 'bg-amber-500/20 text-amber-400 shadow-[0_0_30px_rgba(245,158,11,0.3)]'
                 : 'bg-rose-500/20 text-rose-400 shadow-[0_0_30px_rgba(244,63,94,0.3)]'
             )}
           >
             {isSafe ? (
               <ShieldCheck className="w-14 h-14 drop-shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
+            ) : isSuspicious ? (
+              <AlertTriangle className="w-14 h-14 drop-shadow-[0_0_12px_rgba(245,158,11,0.8)]" />
             ) : (
               <ShieldAlert className="w-14 h-14 drop-shadow-[0_0_12px_rgba(244,63,94,0.8)]" />
             )}
@@ -126,10 +140,10 @@ export default function ResultPanel({ result }) {
               <span
                 className={cn(
                   'text-3xl md:text-4xl font-black tracking-tight',
-                  isSafe ? 'text-emerald-400' : 'text-rose-400'
+                  isSafe ? 'text-emerald-400' : isSuspicious ? 'text-amber-400' : 'text-rose-400'
                 )}
               >
-                {isSafe ? 'VERIFIED SAFE' : 'MALICIOUS THREAT DETECTED'}
+                {verdictTitle}
               </span>
               <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-white/10 text-slate-300 border border-white/10">
                 Confidence {confidencePercent}%
@@ -188,8 +202,9 @@ export default function ResultPanel({ result }) {
         </div>
       </div>
 
-      {/* ── 2. Trust Score Gauge ─────────────────────────────── */}
-      <div className="px-8 py-8 border-b border-white/5 bg-slate-900/60">
+      {/* ── 2. Trust Score Gauge (URLs & Heuristic Scans) ───────── */}
+      {result.synthetic_probability === undefined && (
+        <div className="px-8 py-8 border-b border-white/5 bg-slate-900/60">
         <div className="flex justify-between items-end mb-4">
           <div>
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
@@ -227,6 +242,7 @@ export default function ResultPanel({ result }) {
           <span>100 (Verified Legitimate)</span>
         </div>
       </div>
+      )}
 
       {/* ── 3. Risk Factors ──────────────────────────────────── */}
       {!isSafe && result.risk_factors?.length > 0 && (

@@ -249,3 +249,4 @@ export default function DeepfakeResultCard({ result }) {
     </div>
   );
 }
+
