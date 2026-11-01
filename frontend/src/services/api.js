@@ -69,6 +69,30 @@ export const scanQr = async (file) => {
   }
 };
 
+export const scanSynthetic = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch(`${API_BASE}/scan/synthetic`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Server error: ${res.status}`);
+    }
+
+    return await res.json();
+  } catch (err) {
+    if (err.message.includes('fetch') || err.message.includes('Failed')) {
+      throw new Error('Cannot reach the API. Make sure the backend server is running on port 8000.');
+    }
+    throw err;
+  }
+};
+
 export const scanVisual = async (file, originUrl = '') => {
   try {
     const formData = new FormData();

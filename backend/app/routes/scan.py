@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 
 from app.services.scan_service import ScanService
 from app.services.visual_service import visual_service
+from app.services.synthetic_media_service import synthetic_media_service
 from app.services.cache_service import reputation_cache
 from app.utils.logger import setup_logger
 from app.utils.validators import is_valid_url
@@ -72,6 +73,18 @@ class VisualScanResponse(BaseModel):
     extracted_entities: dict[str, Any]
     extracted_urls_scans: list[dict[str, Any]]
     raw_text_snippet: str
+
+
+class SyntheticScanResponse(BaseModel):
+    verdict: str
+    synthetic_probability: float
+    authenticity_score: float
+    confidence: float
+    risk_factors: list[str]
+    image_properties: dict[str, Any]
+    provenance: dict[str, Any]
+    frequency_analysis: dict[str, Any]
+    visual_forensics: dict[str, Any]
 
 
 class DisputeReportRequest(BaseModel):
@@ -241,6 +254,45 @@ async def scan_visual(
     except Exception as e:
         logger.error(f"Visual scan error: {e}")
         raise HTTPException(status_code=500, detail=f"Visual inspection failed: {str(e)}")
+    finally:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+
+
+@router.post("/scan/synthetic", response_model=SyntheticScanResponse)
+@limiter.limit("20/minute")
+async def scan_synthetic_media(
+    request: Request,
+    response: Response,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Upload visual media (portrait, KYC doc, social avatar, artwork),
+    perform 2D FFT spatial frequency analysis, EXIF/C2PA provenance checks,
+    and calculate Generative AI / Deepfake probability.
+    """
+    allowed_types = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type: {file.content_type}. Use JPEG, PNG, or WebP."
+        )
+
+    suffix = os.path.splitext(file.filename or "")[-1] or ".png"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        shutil.copyfileobj(file.file, tmp)
+        tmp_path = tmp.name
+
+    try:
+        result = synthetic_media_service.inspect_image(tmp_path)
+        logger.info(f"Synthetic Media Scan: verdict={result['verdict']} prob={result['synthetic_probability']}")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Synthetic media scan error: {e}")
+        raise HTTPException(status_code=500, detail=f"Synthetic media inspection failed: {str(e)}")
     finally:
         if os.path.exists(tmp_path):
             os.unlink(tmp_path)

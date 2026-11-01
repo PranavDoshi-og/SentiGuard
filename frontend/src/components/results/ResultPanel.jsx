@@ -19,6 +19,7 @@ import DisputeModal from './DisputeModal';
 import ShapExplanations from './ShapExplanations';
 import HeuristicMatrix from './HeuristicMatrix';
 import VisualResultCard from './VisualResultCard';
+import DeepfakeResultCard from './DeepfakeResultCard';
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -67,7 +68,7 @@ export default function ResultPanel({ result }) {
 
   const isSafe = result.verdict === 'SAFE';
   const confidencePercent = Math.round((typeof result.confidence === 'number' ? result.confidence : 0) * 100);
-  const trustScore = typeof result.trust_score === 'number' && !isNaN(result.trust_score) ? result.trust_score : (isSafe ? 90 : 10);
+  const trustScore = typeof result.trust_score === 'number' && !isNaN(result.trust_score) ? result.trust_score : (typeof result.authenticity_score === 'number' ? result.authenticity_score : (isSafe ? 90 : 10));
 
   const handleCopyUrl = () => {
     if (result.url) {
@@ -154,7 +155,7 @@ export default function ResultPanel({ result }) {
             {/* Target URL Omnibar */}
             <div className="inline-flex items-center gap-2 max-w-full bg-slate-950/80 text-slate-300 font-mono text-xs px-3.5 py-2 rounded-xl border border-slate-800 shadow-inner mt-1">
               <span className="truncate max-w-[320px] sm:max-w-[480px]" title={result.url || "Visual Media Target"}>
-                {result.url || (result.image_metadata ? `Visual Scan (${result.image_metadata.format} ${result.image_metadata.width}x${result.image_metadata.height})` : "Media Scan Target")}
+                {result.url || (result.image_properties ? `AI Media Scan (${result.image_properties.format} ${result.image_properties.width}x${result.image_properties.height})` : (result.image_metadata ? `Visual Scan (${result.image_metadata.format} ${result.image_metadata.width}x${result.image_metadata.height})` : "Inspection Target"))}
               </span>
               <button
                 onClick={handleCopyUrl}
@@ -250,6 +251,9 @@ export default function ResultPanel({ result }) {
 
       {/* ── 4. Visual Media & Brand Forensics (Phase 1) ─────── */}
       <VisualResultCard result={result} />
+
+      {/* ── 4b. AI Deepfake & Synthetic Media Forensics (Phase 2) ─ */}
+      <DeepfakeResultCard result={result} />
 
       {/* ── 5. HTTP Redirect Tracer ─────────────────────────── */}
       {result.url && <RedirectTracer redirectTrace={result.redirect_trace} initialUrl={result.url} />}

@@ -3,10 +3,11 @@ import Hero from '../layout/Hero';
 import UrlScanner from '../scanner/UrlScanner';
 import QrScanner from '../scanner/QrScanner';
 import VisualScanner from '../scanner/VisualScanner';
+import DeepfakeScanner from '../scanner/DeepfakeScanner';
 import ResultPanel from '../results/ResultPanel';
 import AuditLog from '../history/AuditLog';
-import { scanUrl, scanQr, scanVisual } from '../../services/api';
-import { Link2, QrCode, AlertCircle, Image as ImageIcon } from 'lucide-react';
+import { scanUrl, scanQr, scanVisual, scanSynthetic } from '../../services/api';
+import { Link2, QrCode, AlertCircle, Image as ImageIcon, Bot } from 'lucide-react';
 import { cn } from '../results/ResultPanel';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -34,14 +35,20 @@ export default function Dashboard() {
   const saveToHistory = (scanData) => {
     if (!scanData) return;
     const displayLabel = scanData.url || (
-      scanData.brand_analysis?.detected_brands?.length 
+      scanData.synthetic_probability !== undefined
+        ? `AI Media: ${scanData.verdict} (${Math.round(scanData.synthetic_probability * 100)}% Synthetic)`
+        : scanData.brand_analysis?.detected_brands?.length 
         ? `Visual: ${scanData.brand_analysis.detected_brands.join(', ')}` 
-        : (scanData.image_metadata ? `Visual Scan (${scanData.image_metadata.format})` : 'Visual Phishing')
+        : (scanData.image_metadata ? `Visual Scan (${scanData.image_metadata.format})` : 'Media Scan')
     );
+    const calculatedScore = scanData.trust_score !== undefined 
+      ? scanData.trust_score 
+      : (scanData.authenticity_score !== undefined ? scanData.authenticity_score : 50.0);
+
     const entry = {
       url: displayLabel,
       verdict: scanData.verdict,
-      trust_score: scanData.trust_score,
+      trust_score: calculatedScore,
       confidence: scanData.confidence,
       timestamp: new Date().toISOString(),
     };
@@ -83,6 +90,8 @@ export default function Dashboard() {
         data = await scanQr(input);
       } else if (type === 'visual') {
         data = await scanVisual(input.file, input.originUrl);
+      } else if (type === 'synthetic') {
+        data = await scanSynthetic(input);
       }
       setResult(data);
       saveToHistory(data);
@@ -107,7 +116,7 @@ export default function Dashboard() {
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.15 }}
-        className="flex bg-slate-900/70 backdrop-blur-xl border border-white/10 p-1.5 rounded-2xl mb-8 shadow-[0_0_30px_rgba(0,0,0,0.5)] relative z-20 max-w-xl mx-auto"
+        className="flex bg-slate-900/70 backdrop-blur-xl border border-white/10 p-1.5 rounded-2xl mb-8 shadow-[0_0_30px_rgba(0,0,0,0.5)] relative z-20 max-w-2xl mx-auto"
       >
         <button
           onClick={() => {
@@ -166,6 +175,25 @@ export default function Dashboard() {
           )}
           <ImageIcon className="w-4 h-4" /> Visual Phishing & OCR
         </button>
+        <button
+          onClick={() => {
+            setActiveTab('synthetic');
+            setError(null);
+          }}
+          className={cn(
+            'relative flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold tracking-wide transition-colors z-10',
+            activeTab === 'synthetic' ? 'text-white' : 'text-slate-400 hover:text-white'
+          )}
+        >
+          {activeTab === 'synthetic' && (
+            <motion.div
+              layoutId="activeTab"
+              className="absolute inset-0 bg-gradient-to-r from-fuchsia-600 to-purple-600 rounded-xl shadow-[0_0_20px_rgba(217,70,239,0.4)] -z-10"
+              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            />
+          )}
+          <Bot className="w-4 h-4" /> AI Deepfake & Media
+        </button>
       </motion.div>
 
       {/* Scanner Section */}
@@ -191,7 +219,7 @@ export default function Dashboard() {
             >
               <QrScanner onScan={(payload, type) => handleScan(payload, type)} isLoading={isLoading} />
             </motion.div>
-          ) : (
+          ) : activeTab === 'visual' ? (
             <motion.div
               key="visual"
               initial={{ opacity: 0, x: 15 }}
@@ -200,6 +228,16 @@ export default function Dashboard() {
               transition={{ duration: 0.25 }}
             >
               <VisualScanner onScan={(payload, type) => handleScan(payload, type)} isLoading={isLoading} />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="synthetic"
+              initial={{ opacity: 0, x: 15 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -15 }}
+              transition={{ duration: 0.25 }}
+            >
+              <DeepfakeScanner onScan={(payload, type) => handleScan(payload, type)} isLoading={isLoading} />
             </motion.div>
           )}
         </AnimatePresence>
