@@ -83,6 +83,7 @@ def root():
             "scan_qr": "/api/scan/qr",
             "scan_visual": "/api/scan/visual",
             "scan_synthetic": "/api/scan/synthetic",
+            "scan_document": "/api/scan/document",
             "report_dispute": "/api/scan/report",
             "cache_stats": "/api/scan/cache/stats",
             "telemetry_stats": "/api/scan/stats",

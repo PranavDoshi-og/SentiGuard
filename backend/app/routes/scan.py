@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 from app.services.scan_service import ScanService
 from app.services.visual_service import visual_service
 from app.services.synthetic_media_service import synthetic_media_service
+from app.services.document_inspector import document_inspector_service
 from app.services.cache_service import reputation_cache
 from app.utils.logger import setup_logger
 from app.utils.validators import is_valid_url
@@ -85,6 +86,18 @@ class SyntheticScanResponse(BaseModel):
     provenance: dict[str, Any]
     frequency_analysis: dict[str, Any]
     visual_forensics: dict[str, Any]
+
+
+class DocumentScanResponse(BaseModel):
+    verdict: str
+    trust_score: float
+    confidence: float
+    risk_factors: list[str]
+    document_metadata: dict[str, Any]
+    structural_exploits: dict[str, Any]
+    invoice_heuristics: dict[str, Any]
+    extracted_links: list[dict[str, Any]]
+    text_preview: str
 
 
 class DisputeReportRequest(BaseModel):
@@ -293,6 +306,45 @@ async def scan_synthetic_media(
     except Exception as e:
         logger.error(f"Synthetic media scan error: {e}")
         raise HTTPException(status_code=500, detail=f"Synthetic media inspection failed: {str(e)}")
+    finally:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+
+
+@router.post("/scan/document", response_model=DocumentScanResponse)
+@limiter.limit("20/minute")
+async def scan_document(
+    request: Request,
+    response: Response,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Upload a PDF document or invoice attachment, parse for embedded JavaScript,
+    Launch actions, hidden payloads, and scan embedded hyperlinks.
+    """
+    allowed_types = ["application/pdf", "application/x-pdf"]
+    filename_lower = (file.filename or "").lower()
+    if file.content_type not in allowed_types and not filename_lower.endswith(".pdf"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type: {file.content_type}. Please upload a valid PDF (.pdf) file."
+        )
+
+    suffix = os.path.splitext(file.filename or "")[-1] or ".pdf"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        shutil.copyfileobj(file.file, tmp)
+        tmp_path = tmp.name
+
+    try:
+        result = document_inspector_service.inspect_pdf(tmp_path)
+        logger.info(f"Document Scan: verdict={result['verdict']} trust={result['trust_score']}")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Document scan error: {e}")
+        raise HTTPException(status_code=500, detail=f"Document inspection failed: {str(e)}")
     finally:
         if os.path.exists(tmp_path):
             os.unlink(tmp_path)

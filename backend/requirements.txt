@@ -28,6 +28,7 @@ pyzbar==0.1.9
 Pillow==12.2.0
 pytesseract>=0.3.10
 rapidfuzz>=3.9.0
+pypdf>=5.0.0
 
 # ── Utilities ──────────────────────────────────────────────
 pydantic==2.12.5

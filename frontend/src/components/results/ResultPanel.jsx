@@ -20,6 +20,7 @@ import ShapExplanations from './ShapExplanations';
 import HeuristicMatrix from './HeuristicMatrix';
 import VisualResultCard from './VisualResultCard';
 import DeepfakeResultCard from './DeepfakeResultCard';
+import DocumentResultCard from './DocumentResultCard';
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -75,10 +76,10 @@ export default function ResultPanel({ result }) {
     : (typeof result.authenticity_score === 'number' ? result.authenticity_score : (isSafe ? 90 : 10));
 
   const verdictTitle = isSafe
-    ? (result.synthetic_probability !== undefined ? 'AUTHENTIC PHOTOGRAPHIC MEDIA' : 'VERIFIED SAFE')
+    ? (result.document_metadata ? 'AUTHENTIC DOCUMENT VERIFIED' : (result.synthetic_probability !== undefined ? 'AUTHENTIC PHOTOGRAPHIC MEDIA' : 'VERIFIED SAFE'))
     : isSuspicious
-    ? (result.synthetic_probability !== undefined ? 'SUSPICIOUS / INCONCLUSIVE ARTIFACTS' : 'SUSPICIOUS SECURITY PROFILE')
-    : (result.synthetic_probability !== undefined ? 'AI SYNTHETIC MEDIA DETECTED' : 'MALICIOUS THREAT DETECTED');
+    ? (result.document_metadata ? 'SUSPICIOUS DOCUMENT DETECTED' : (result.synthetic_probability !== undefined ? 'SUSPICIOUS / INCONCLUSIVE ARTIFACTS' : 'SUSPICIOUS SECURITY PROFILE'))
+    : (result.document_metadata ? 'MALICIOUS WEAPONIZED PDF DETECTED' : (result.synthetic_probability !== undefined ? 'AI SYNTHETIC MEDIA DETECTED' : 'MALICIOUS THREAT DETECTED'));
 
   const handleCopyUrl = () => {
     if (result.url) {
@@ -169,7 +170,7 @@ export default function ResultPanel({ result }) {
             {/* Target URL Omnibar */}
             <div className="inline-flex items-center gap-2 max-w-full bg-slate-950/80 text-slate-300 font-mono text-xs px-3.5 py-2 rounded-xl border border-slate-800 shadow-inner mt-1">
               <span className="truncate max-w-[320px] sm:max-w-[480px]" title={result.url || "Visual Media Target"}>
-                {result.url || (result.image_properties ? `AI Media Scan (${result.image_properties.format} ${result.image_properties.width}x${result.image_properties.height})` : (result.image_metadata ? `Visual Scan (${result.image_metadata.format} ${result.image_metadata.width}x${result.image_metadata.height})` : "Inspection Target"))}
+                {result.url || (result.document_metadata ? `PDF Document: ${result.document_metadata.title} (${result.document_metadata.page_count} Pages)` : (result.image_properties ? `AI Media Scan (${result.image_properties.format} ${result.image_properties.width}x${result.image_properties.height})` : (result.image_metadata ? `Visual Scan (${result.image_metadata.format} ${result.image_metadata.width}x${result.image_metadata.height})` : "Inspection Target")))}
               </span>
               <button
                 onClick={handleCopyUrl}
@@ -270,6 +271,9 @@ export default function ResultPanel({ result }) {
 
       {/* ── 4b. AI Deepfake & Synthetic Media Forensics (Phase 2) ─ */}
       <DeepfakeResultCard result={result} />
+
+      {/* ── 4c. Weaponized PDF & Document Forensics (Phase 3) ──── */}
+      <DocumentResultCard result={result} />
 
       {/* ── 5. HTTP Redirect Tracer ─────────────────────────── */}
       {result.url && <RedirectTracer redirectTrace={result.redirect_trace} initialUrl={result.url} />}
