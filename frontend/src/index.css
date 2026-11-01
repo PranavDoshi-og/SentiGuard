@@ -9,11 +9,11 @@
 
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-100 font-sans antialiased selection:bg-primary-500/30 selection:text-white overflow-x-hidden;
+    @apply bg-[#04060b] text-slate-100 font-sans antialiased selection:bg-violet-500/30 selection:text-white overflow-x-hidden;
     background-image: 
-      radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-      radial-gradient(circle at 85% 30%, rgba(6, 182, 212, 0.15) 0%, transparent 50%),
-      radial-gradient(circle at 50% 100%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+      radial-gradient(circle at 15% 30%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
+      radial-gradient(circle at 85% 20%, rgba(124, 58, 237, 0.14) 0%, transparent 50%),
+      radial-gradient(circle at 50% 90%, rgba(6, 182, 212, 0.08) 0%, transparent 50%);
     background-attachment: fixed;
   }
 }
@@ -23,8 +23,8 @@
 }
 
 @utility text-gradient {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-cyan-400 to-indigo-400;
-  animation: shine 5s linear infinite;
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-violet-300 via-cyan-300 to-indigo-300;
+  animation: shine 6s linear infinite;
   background-size: 200% auto;
 }
 
@@ -45,7 +45,117 @@
 }
 
 @utility animate-marquee {
-  animation: marquee 30s linear infinite;
+  animation: marquee 35s linear infinite;
+}
+
+@utility animate-marquee-reverse {
+  animation: marqueeReverse 35s linear infinite;
+}
+
+/* SalesHookAI Inspired Premium Elements */
+.pearl-badge {
+  isolation: isolate;
+  color: #ffffffe0;
+  background-color: #0a0a0c;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 .2rem .45rem rgba(255, 255, 255, 0.28), 
+              inset 0 -.08rem .2rem rgba(0, 0, 0, 0.75), 
+              inset 0 -.22rem .5rem rgba(255, 255, 255, 0.3), 
+              0 .5rem .9rem rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.pearl-badge:before {
+  content: "";
+  z-index: -1;
+  pointer-events: none;
+  background-color: rgba(255, 255, 255, 0.14);
+  border-radius: 50%;
+  height: 65%;
+  position: absolute;
+  top: -15%;
+  left: -5%;
+  right: -5%;
+}
+
+.pearl-panel {
+  isolation: isolate;
+  background-color: #08090f;
+  position: relative;
+  box-shadow: inset .4rem 0 .9rem rgba(255, 255, 255, 0.06), 
+              inset 0 0 3rem rgba(255, 255, 255, 0.05), 
+              -.5rem 0 2rem rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gradient-button {
+  appearance: none;
+  cursor: pointer;
+  background: radial-gradient(150% 180% at 11% 140%, #000 37%, #1a0b2e 61%, #3b1f5c 78%, #582a8e 89%, #7c3aed 100%);
+  position: relative;
+  border-radius: 12px;
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gradient-button:hover {
+  background: radial-gradient(120% 103% at 0% 91%, #2e1065 0%, #582a8e 9%, #7c3aed 21%, #8b5cf6 71%, #1a0b2e 86%);
+  box-shadow: 0 6px 30px rgba(139, 92, 246, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.lp3-hub-line {
+  stroke-dasharray: 6 3;
+  animation: hubDash 20s linear infinite;
+}
+
+.lp3-ring-pulse {
+  animation: ringPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.lp3-cell-glow {
+  box-shadow: 0 0 14px rgba(139, 92, 246, 0.25);
+}
+
+.lp3-row-glow {
+  box-shadow: inset 0 0 18px rgba(124, 58, 237, 0.18);
+}
+
+.roi-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: #fff;
+  border: 3px solid #7c3aed;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.4);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.roi-range::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+.roi-range::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: #fff;
+  border: 3px solid #7c3aed;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.4);
+  cursor: pointer;
+}
+
+@keyframes hubDash {
+  to { stroke-dashoffset: -100; }
+}
+
+@keyframes ringPulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.35); opacity: 0; }
+  100% { transform: scale(0.95); opacity: 0; }
 }
 
 @keyframes radarSweep {
@@ -56,6 +166,11 @@
 @keyframes marquee {
   0% { transform: translateX(0%); }
   100% { transform: translateX(-50%); }
+}
+
+@keyframes marqueeReverse {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0%); }
 }
 
 @keyframes float {

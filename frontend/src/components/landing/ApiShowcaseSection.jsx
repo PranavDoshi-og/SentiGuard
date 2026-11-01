@@ -155,3 +155,4 @@ if (data.verdict === 'MALICIOUS_BRAND_IMPERSONATION') {
     </section>
   );
 }
+
