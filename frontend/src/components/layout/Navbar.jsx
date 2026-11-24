@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Activity, ArrowRight, LayoutDashboard, ChevronLeft, Sparkles } from 'lucide-react';
+import { Shield, Activity, ArrowRight, LayoutDashboard, ChevronLeft } from 'lucide-react';
 
 export default function Navbar({ apiStatus, currentView, onViewChange }) {
   const scrollToSection = (sectionId) => {
@@ -35,62 +35,62 @@ export default function Navbar({ apiStatus, currentView, onViewChange }) {
         </div>
       </div>
 
-      {/* Center Nav Links (Desktop) */}
-      <div className="hidden lg:flex items-center gap-6 text-xs font-medium text-slate-300">
-        <button
-          onClick={() => {
-            onViewChange('landing');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          className={`hover:text-violet-400 transition-colors cursor-pointer ${
-            currentView === 'landing' ? 'text-violet-400 font-semibold' : ''
-          }`}
-        >
-          Overview
-        </button>
-        <button
-          onClick={() => scrollToSection('threat-engines')}
-          className="hover:text-violet-400 transition-colors cursor-pointer"
-        >
-          Engines
-        </button>
-        <button
-          onClick={() => scrollToSection('workflow')}
-          className="hover:text-violet-400 transition-colors cursor-pointer"
-        >
-          Workflow
-        </button>
-        <button
-          onClick={() => scrollToSection('interactive-sandbox')}
-          className="hover:text-violet-400 transition-colors cursor-pointer"
-        >
-          Live Sandbox
-        </button>
-        <button
-          onClick={() => scrollToSection('use-cases')}
-          className="hover:text-violet-400 transition-colors cursor-pointer"
-        >
-          Use Cases
-        </button>
-        <button
-          onClick={() => scrollToSection('comparison')}
-          className="hover:text-violet-400 transition-colors cursor-pointer"
-        >
-          Comparison
-        </button>
-        <button
-          onClick={() => scrollToSection('api')}
-          className="hover:text-violet-400 transition-colors cursor-pointer"
-        >
-          API
-        </button>
-        <button
-          onClick={() => scrollToSection('faq')}
-          className="hover:text-violet-400 transition-colors cursor-pointer"
-        >
-          FAQ
-        </button>
-      </div>
+      {/* Center Nav Links (Desktop - ONLY for Landing Page) */}
+      {currentView === 'landing' && (
+        <div className="hidden lg:flex items-center gap-6 text-xs font-medium text-slate-300">
+          <button
+            onClick={() => {
+              onViewChange('landing');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="text-violet-400 font-semibold transition-colors cursor-pointer"
+          >
+            Overview
+          </button>
+          <button
+            onClick={() => scrollToSection('threat-engines')}
+            className="hover:text-violet-400 transition-colors cursor-pointer"
+          >
+            Engines
+          </button>
+          <button
+            onClick={() => scrollToSection('workflow')}
+            className="hover:text-violet-400 transition-colors cursor-pointer"
+          >
+            Workflow
+          </button>
+          <button
+            onClick={() => scrollToSection('interactive-sandbox')}
+            className="hover:text-violet-400 transition-colors cursor-pointer"
+          >
+            Live Sandbox
+          </button>
+          <button
+            onClick={() => scrollToSection('use-cases')}
+            className="hover:text-violet-400 transition-colors cursor-pointer"
+          >
+            Use Cases
+          </button>
+          <button
+            onClick={() => scrollToSection('comparison')}
+            className="hover:text-violet-400 transition-colors cursor-pointer"
+          >
+            Comparison
+          </button>
+          <button
+            onClick={() => scrollToSection('api')}
+            className="hover:text-violet-400 transition-colors cursor-pointer"
+          >
+            API
+          </button>
+          <button
+            onClick={() => scrollToSection('faq')}
+            className="hover:text-violet-400 transition-colors cursor-pointer"
+          >
+            FAQ
+          </button>
+        </div>
+      )}
       
       {/* Right Controls */}
       <div className="flex items-center gap-3">

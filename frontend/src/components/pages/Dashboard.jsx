@@ -8,7 +8,7 @@ import DocumentScanner from '../scanner/DocumentScanner';
 import ResultPanel from '../results/ResultPanel';
 import AuditLog from '../history/AuditLog';
 import { scanUrl, scanQr, scanVisual, scanSynthetic, scanDocument } from '../../services/api';
-import { Link2, QrCode, AlertCircle, Image as ImageIcon, Bot, FileText, ChevronLeft } from 'lucide-react';
+import { Link2, QrCode, AlertCircle, Image as ImageIcon, Bot, FileText } from 'lucide-react';
 import { cn } from '../results/ResultPanel';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -22,9 +22,32 @@ export default function Dashboard({ initialTab = 'url', onBackToOverview }) {
       setActiveTab(initialTab);
     }
   }, [initialTab]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState(null);
+
+  // Isolated per-tab state for all 5 threat vectors
+  const [tabResults, setTabResults] = useState({
+    url: null,
+    qr: null,
+    visual: null,
+    synthetic: null,
+    document: null,
+  });
+
+  const [tabErrors, setTabErrors] = useState({
+    url: null,
+    qr: null,
+    visual: null,
+    synthetic: null,
+    document: null,
+  });
+
+  const [tabLoading, setTabLoading] = useState({
+    url: false,
+    qr: false,
+    visual: false,
+    synthetic: false,
+    document: false,
+  });
+
   const [history, setHistory] = useState([]);
 
   // Load history on mount
@@ -83,9 +106,10 @@ export default function Dashboard({ initialTab = 'url', onBackToOverview }) {
   };
 
   const handleScan = async (input, type = 'url') => {
-    setIsLoading(true);
-    setError(null);
-    setResult(null);
+    const targetTab = type;
+    setTabLoading((prev) => ({ ...prev, [targetTab]: true }));
+    setTabErrors((prev) => ({ ...prev, [targetTab]: null }));
+    setTabResults((prev) => ({ ...prev, [targetTab]: null }));
 
     try {
       let data;
@@ -104,12 +128,12 @@ export default function Dashboard({ initialTab = 'url', onBackToOverview }) {
       } else if (type === 'document') {
         data = await scanDocument(input);
       }
-      setResult(data);
+      setTabResults((prev) => ({ ...prev, [targetTab]: data }));
       saveToHistory(data);
     } catch (err) {
-      setError(err.message || 'Scanning failed.');
+      setTabErrors((prev) => ({ ...prev, [targetTab]: err.message || 'Scanning failed.' }));
     } finally {
-      setIsLoading(false);
+      setTabLoading((prev) => ({ ...prev, [targetTab]: false }));
     }
   };
 
@@ -120,20 +144,6 @@ export default function Dashboard({ initialTab = 'url', onBackToOverview }) {
 
   return (
     <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 pb-32 relative">
-      {onBackToOverview && (
-        <div className="pt-4 pb-2 flex items-center justify-between">
-          <button
-            onClick={onBackToOverview}
-            className="inline-flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-cyan-400 transition-colors cursor-pointer bg-white/[0.03] border border-white/5 hover:border-cyan-500/30 px-3 py-1.5 rounded-lg"
-          >
-            <ChevronLeft className="w-3.5 h-3.5 text-cyan-400" />
-            <span>← Return to Platform Overview</span>
-          </button>
-          <span className="text-[11px] font-mono text-cyan-400/80 bg-cyan-950/40 border border-cyan-500/20 px-2.5 py-0.5 rounded uppercase tracking-wider">
-            SOC INTELLIGENCE CONSOLE
-          </span>
-        </div>
-      )}
       <Hero />
 
       {/* Animated Tab Switcher */}
@@ -144,12 +154,9 @@ export default function Dashboard({ initialTab = 'url', onBackToOverview }) {
         className="flex bg-slate-900/70 backdrop-blur-xl border border-white/10 p-1.5 rounded-2xl mb-8 shadow-[0_0_30px_rgba(0,0,0,0.5)] relative z-20 max-w-4xl mx-auto"
       >
         <button
-          onClick={() => {
-            setActiveTab('url');
-            setError(null);
-          }}
+          onClick={() => setActiveTab('url')}
           className={cn(
-            'relative flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold tracking-wide transition-colors z-10',
+            'relative flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold tracking-wide transition-colors z-10 cursor-pointer',
             activeTab === 'url' ? 'text-white' : 'text-slate-400 hover:text-white'
           )}
         >
@@ -163,12 +170,9 @@ export default function Dashboard({ initialTab = 'url', onBackToOverview }) {
           <Link2 className="w-4 h-4" /> URL Intelligence
         </button>
         <button
-          onClick={() => {
-            setActiveTab('qr');
-            setError(null);
-          }}
+          onClick={() => setActiveTab('qr')}
           className={cn(
-            'relative flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold tracking-wide transition-colors z-10',
+            'relative flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold tracking-wide transition-colors z-10 cursor-pointer',
             activeTab === 'qr' ? 'text-white' : 'text-slate-400 hover:text-white'
           )}
         >
@@ -182,12 +186,9 @@ export default function Dashboard({ initialTab = 'url', onBackToOverview }) {
           <QrCode className="w-4 h-4" /> QR Scanner
         </button>
         <button
-          onClick={() => {
-            setActiveTab('visual');
-            setError(null);
-          }}
+          onClick={() => setActiveTab('visual')}
           className={cn(
-            'relative flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold tracking-wide transition-colors z-10',
+            'relative flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold tracking-wide transition-colors z-10 cursor-pointer',
             activeTab === 'visual' ? 'text-white' : 'text-slate-400 hover:text-white'
           )}
         >
@@ -201,12 +202,9 @@ export default function Dashboard({ initialTab = 'url', onBackToOverview }) {
           <ImageIcon className="w-4 h-4" /> Visual Phishing & OCR
         </button>
         <button
-          onClick={() => {
-            setActiveTab('synthetic');
-            setError(null);
-          }}
+          onClick={() => setActiveTab('synthetic')}
           className={cn(
-            'relative flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold tracking-wide transition-colors z-10',
+            'relative flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold tracking-wide transition-colors z-10 cursor-pointer',
             activeTab === 'synthetic' ? 'text-white' : 'text-slate-400 hover:text-white'
           )}
         >
@@ -220,12 +218,9 @@ export default function Dashboard({ initialTab = 'url', onBackToOverview }) {
           <Bot className="w-4 h-4" /> AI Deepfake & Media
         </button>
         <button
-          onClick={() => {
-            setActiveTab('document');
-            setError(null);
-          }}
+          onClick={() => setActiveTab('document')}
           className={cn(
-            'relative flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold tracking-wide transition-colors z-10',
+            'relative flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold tracking-wide transition-colors z-10 cursor-pointer',
             activeTab === 'document' ? 'text-white' : 'text-slate-400 hover:text-white'
           )}
         >
@@ -251,7 +246,7 @@ export default function Dashboard({ initialTab = 'url', onBackToOverview }) {
               exit={{ opacity: 0, x: 15 }}
               transition={{ duration: 0.25 }}
             >
-              <UrlScanner onScan={(url) => handleScan(url, 'url')} isLoading={isLoading} />
+              <UrlScanner onScan={(url) => handleScan(url, 'url')} isLoading={tabLoading.url} />
             </motion.div>
           ) : activeTab === 'qr' ? (
             <motion.div
@@ -261,7 +256,7 @@ export default function Dashboard({ initialTab = 'url', onBackToOverview }) {
               exit={{ opacity: 0, x: -15 }}
               transition={{ duration: 0.25 }}
             >
-              <QrScanner onScan={(payload, type) => handleScan(payload, type)} isLoading={isLoading} />
+              <QrScanner onScan={(payload, type) => handleScan(payload, type || 'qr')} isLoading={tabLoading.qr} />
             </motion.div>
           ) : activeTab === 'visual' ? (
             <motion.div
@@ -271,7 +266,7 @@ export default function Dashboard({ initialTab = 'url', onBackToOverview }) {
               exit={{ opacity: 0, x: -15 }}
               transition={{ duration: 0.25 }}
             >
-              <VisualScanner onScan={(payload, type) => handleScan(payload, type)} isLoading={isLoading} />
+              <VisualScanner onScan={(payload, type) => handleScan(payload, type || 'visual')} isLoading={tabLoading.visual} />
             </motion.div>
           ) : activeTab === 'synthetic' ? (
             <motion.div
@@ -281,7 +276,7 @@ export default function Dashboard({ initialTab = 'url', onBackToOverview }) {
               exit={{ opacity: 0, x: -15 }}
               transition={{ duration: 0.25 }}
             >
-              <DeepfakeScanner onScan={(payload, type) => handleScan(payload, type)} isLoading={isLoading} />
+              <DeepfakeScanner onScan={(payload, type) => handleScan(payload, type || 'synthetic')} isLoading={tabLoading.synthetic} />
             </motion.div>
           ) : (
             <motion.div
@@ -291,30 +286,41 @@ export default function Dashboard({ initialTab = 'url', onBackToOverview }) {
               exit={{ opacity: 0, x: -15 }}
               transition={{ duration: 0.25 }}
             >
-              <DocumentScanner onScan={(payload, type) => handleScan(payload, type)} isLoading={isLoading} />
+              <DocumentScanner onScan={(payload, type) => handleScan(payload, type || 'document')} isLoading={tabLoading.document} />
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Error Banner */}
-      <AnimatePresence>
-        {error && (
+      {/* Error Banner (Isolated to Active Box) */}
+      <AnimatePresence mode="wait">
+        {tabErrors[activeTab] && (
           <motion.div
+            key={activeTab + '-error'}
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             className="mt-6 bg-rose-500/10 border border-rose-500/30 rounded-2xl p-5 flex items-start gap-3 shadow-[0_0_30px_rgba(244,63,94,0.15)] backdrop-blur-md"
           >
             <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-            <p className="text-rose-200 text-sm leading-relaxed">{error}</p>
+            <p className="text-rose-200 text-sm leading-relaxed">{tabErrors[activeTab]}</p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Scan Results Panel */}
-      <AnimatePresence>
-        {result && <ResultPanel result={result} />}
+      {/* Scan Results Panel (Isolated to Active Box) */}
+      <AnimatePresence mode="wait">
+        {tabResults[activeTab] && (
+          <motion.div
+            key={activeTab + '-result'}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.25 }}
+          >
+            <ResultPanel result={tabResults[activeTab]} />
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* Session Audit History */}

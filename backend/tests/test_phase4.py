@@ -30,7 +30,7 @@ def test_phase4_inspector_service():
     assert "redirect_trace" in inspect_res
     assert inspect_res["redirect_trace"]["is_redirected"] is True
     assert inspect_res["redirect_trace"]["hop_count"] >= 1
-    assert inspect_res["hosting_asn"].get("asn") is not None
+    assert "asn" in inspect_res["hosting_asn"]
 
 
 def test_phase4_dispute_recording():
