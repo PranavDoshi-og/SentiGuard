@@ -28,15 +28,15 @@ logger = setup_logger("sentiguard.services.visual")
 # Verified Brand Intelligence Dictionary
 KNOWN_BRANDS = {
     "Microsoft": {
-        "keywords": ["microsoft", "office 365", "microsoft 365", "outlook", "onedrive", "azure", "windows security"],
+        "keywords": ["microsoft", "micrcoft", "micro soft", "office 365", "microsoft 365", "outlook", "onedrive", "azure", "windows security"],
         "valid_domains": ["microsoft.com", "office.com", "office365.com", "live.com", "outlook.com", "azure.com", "microsoftonline.com", "sharepoint.com"]
     },
     "Google": {
-        "keywords": ["google", "gmail", "google workspace", "google drive", "google security"],
+        "keywords": ["google", "g00gle", "gmail", "google workspace", "google drive", "google security"],
         "valid_domains": ["google.com", "gmail.com", "googlemail.com", "youtube.com", "accounts.google.com"]
     },
     "PayPal": {
-        "keywords": ["paypal", "paypal customer support", "paypal security"],
+        "keywords": ["paypal", "paypa1", "pay pal", "pay-pal", "paypal customer support", "paypal security"],
         "valid_domains": ["paypal.com", "paypal-community.com"]
     },
     "Apple": {
@@ -44,7 +44,7 @@ KNOWN_BRANDS = {
         "valid_domains": ["apple.com", "icloud.com"]
     },
     "Amazon": {
-        "keywords": ["amazon", "amazon prime", "amazon aws", "amazon security"],
+        "keywords": ["amazon", "amaz0n", "amazon prime", "amazon aws", "amazon security"],
         "valid_domains": ["amazon.com", "amazon.co.uk", "amazon.de", "amazon.in", "aws.amazon.com"]
     },
     "Netflix": {
@@ -91,13 +91,15 @@ KNOWN_BRANDS = {
 
 # High-risk urgency and extortion patterns
 URGENCY_PATTERNS = [
-    (r"(?i)\b(?:immediately|within\s+(?:\d{1,2}|24|48)\s+hours?|urgent|urgently)\b", 15.0, "Artificial urgency deadline"),
-    (r"(?i)\b(?:account\s+(?:suspended|terminated|locked|disabled|blocked|restricted))\b", 25.0, "Account suspension threat"),
-    (r"(?i)\b(?:unauthorized|fraudulent|suspicious)\s+(?:transaction|charge|login|activity)\b", 20.0, "Scare-tactic unauthorized charge alert"),
-    (r"(?i)\b(?:refund\s+desk|billing\s+department|call\s+now|call\s+toll[\s-]free|helpdesk\s+number)\b", 20.0, "Callback phishing / tech support lure"),
+    (r"(?i)\b(?:immediately|within\s+(?:\d{1,2}|24|48)\s+hours?|urgent|urgently|action\s+required)\b", 20.0, "Artificial urgency deadline"),
+    (r"(?i)\b(?:account\s+(?:susl?h?nded|suspended|terminated|locked|disabled|blocked|restricted|closed))\b", 30.0, "Account suspension threat"),
+    (r"(?i)\b(?:security\s+(?:warning|alert|notification|breach|incident))\b", 20.0, "Security scare-tactic alert"),
+    (r"(?i)\b(?:permanent(?:ly)?\s+(?:termination|deleted?|lost|loss))\b", 25.0, "Permanent loss coercion"),
+    (r"(?i)\b(?:unauthorized|fraudulent|suspicious)\s+(?:transaction|charge|login|activity|access)?\b", 20.0, "Scare-tactic unauthorized activity alert"),
+    (r"(?i)\b(?:refund\s+desk|billing\s+department|call\s+now|call\s+toll[\s-]free|helpdesk\s+number|hotline)\b", 20.0, "Callback phishing / tech support lure"),
     (r"(?i)\b(?:gift\s+card|bitcoin|crypto(?:currency)?|wire\s+transfer|western\s+union)\b", 30.0, "Untraceable payment coercion (crypto / gift card)"),
     (r"(?i)\b(?:law\s+enforcement|police|arrest\s+warrant|fbi|legal\s+action)\b", 35.0, "Extortion / legal intimidation"),
-    (r"(?i)\b(?:enter\s+password|verify\s+identity|confirm\s+credentials|seed\s+phrase)\b", 25.0, "Credential harvesting prompt"),
+    (r"(?i)\b(?:enter\s+password|verify\s+(?:identity|credentials|account)|confirm\s+credentials|seed\s+phrase)\b", 25.0, "Credential harvesting prompt"),
 ]
 
 
@@ -270,7 +272,7 @@ class VisualInspectionService:
                 if kw in lower_text:
                     matched = True
                     break
-                elif fuzz and fuzz.partial_ratio(kw, lower_text) > 88:
+                elif fuzz and fuzz.partial_ratio(kw, lower_text) >= 78:
                     matched = True
                     break
 
@@ -286,7 +288,7 @@ class VisualInspectionService:
                             break
 
                 # If brand is detected, but domain points elsewhere or suspicious phishing lure context
-                if not has_legit_domain and (associated_domains or any(w in lower_text for w in ["support", "helpdesk", "invoice", "refund", "suspend", "security", "warning", "login", "password"])):
+                if not has_legit_domain and (associated_domains or any(w in lower_text for w in ["support", "helpdesk", "invoice", "refund", "suspend", "security", "warning", "login", "password", "immediately"])):
                     mismatched_brands.append({
                         "brand": brand_name,
                         "expected_domains": valid_domains,
@@ -337,7 +339,7 @@ class VisualInspectionService:
         # 1. Brand Impersonation (P0 Threat)
         if brand_analysis["is_impersonation"]:
             for item in brand_analysis["mismatched_brands"]:
-                trust_score -= 50.0
+                trust_score -= 60.0
                 found = ", ".join(item["found_domains"]) if item["found_domains"] else "None / Unverified destination"
                 risk_factors.append(
                     f"Brand Impersonation: '{item['brand']}' detected, but target destination is {found}"
@@ -345,24 +347,27 @@ class VisualInspectionService:
 
         # 2. Extracted URL Maliciousness
         if highest_url_threat >= 1.0:
-            trust_score -= 45.0
+            trust_score -= 50.0
             risk_factors.append("Embedded URL in visual media confirmed as PHISHING by SentiGuard threat engine")
         elif highest_url_threat >= 0.7:
-            trust_score -= 25.0
+            trust_score -= 30.0
             risk_factors.append("Embedded URL in visual media shows suspicious security heuristics")
 
         # 3. Urgency & Social Engineering Sentiment
         urgency_score = urgency_analysis["urgency_score"]
         if urgency_score >= 60.0:
-            trust_score -= 30.0
+            trust_score -= 45.0
             risk_factors.append(f"Severe social engineering urgency detected (Urgency Score: {urgency_score}/100)")
-        elif urgency_score >= 30.0:
-            trust_score -= 15.0
+        elif urgency_score >= 35.0:
+            trust_score -= 30.0
             risk_factors.append(f"Suspicious coercive phrasing detected (Urgency Score: {urgency_score}/100)")
+        elif urgency_score >= 15.0:
+            trust_score -= 15.0
+            risk_factors.append(f"Mild artificial urgency cues detected (Urgency Score: {urgency_score}/100)")
 
         # 4. Callback / Tech Support Phone Lures
-        if entities["phone_numbers"] and any(b in ["Geek Squad / Best Buy", "Norton / McAfee", "PayPal", "Amazon"] for b in brand_analysis["detected_brands"]):
-            trust_score -= 20.0
+        if entities["phone_numbers"] and any(b in ["Geek Squad / Best Buy", "Norton / McAfee", "PayPal", "Amazon", "Microsoft"] for b in brand_analysis["detected_brands"]):
+            trust_score -= 25.0
             phone_list = ", ".join(entities["phone_numbers"][:2])
             risk_factors.append(f"Callback phishing pattern: High-risk brand with direct phone support lure ({phone_list})")
 
@@ -370,12 +375,12 @@ class VisualInspectionService:
         trust_score = max(0.0, min(100.0, round(trust_score, 1)))
 
         # Assign verdict
-        if trust_score < 45.0 or brand_analysis["is_impersonation"] or highest_url_threat >= 1.0:
+        if trust_score < 50.0 or brand_analysis["is_impersonation"] or highest_url_threat >= 1.0:
             verdict = "PHISHING"
-            confidence = 0.92
-        elif trust_score < 75.0:
+            confidence = 0.94
+        elif trust_score < 75.0 or urgency_score >= 35.0:
             verdict = "SUSPICIOUS"
-            confidence = 0.78
+            confidence = 0.82
         else:
             verdict = "SAFE"
             confidence = 0.88

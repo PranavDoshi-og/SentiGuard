@@ -8,10 +8,11 @@ Provides robust, multi-strategy Optical Character Recognition:
 """
 
 import os
+import re
 import subprocess
 import tempfile
 from typing import Any
-from PIL import Image
+from PIL import Image, ImageOps, ImageEnhance
 
 try:
     import pytesseract
@@ -31,6 +32,45 @@ TESSERACT_SEARCH_PATHS = [
 
 # Cache to avoid re-running checks repeatedly
 _TESSERACT_FOUND = None
+
+
+def normalize_ocr_text(text: str) -> str:
+    """Cleans up common optical character recognition anomalies."""
+    if not text:
+        return ""
+    # Fix broken URL schemes caused by OCR font confusion
+    t = re.sub(r'(?i)https?[l|:;,\s]+[/\\]+', 'https://', text)
+    t = re.sub(r'(?i)httpü', 'http://', t)
+    t = re.sub(r'(?i)httpsü', 'https://', t)
+    t = re.sub(r'(?i)hxxps?://', 'https://', t)
+    # Fix separated domain TLDs caused by OCR kerning
+    t = re.sub(r'\s*\.\s*(com|xyz|org|net|io|top|site|info|online|co|us|biz)\b', r'.\1', t, flags=re.IGNORECASE)
+    return t.strip()
+
+
+def preprocess_image_for_ocr(image_path: str) -> str:
+    """
+    Normalizes, sharpens, and upscales small/low-resolution images
+    for dramatically higher OCR recognition accuracy.
+    """
+    try:
+        with Image.open(image_path) as img:
+            w, h = img.size
+            scale = 1.0
+            if max(w, h) < 1600 or min(w, h) < 600:
+                scale = max(1.5, min(3.0, 1600.0 / max(w, h, 1)))
+
+            new_w, new_h = int(w * scale), int(h * scale)
+            processed = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+            processed = ImageOps.grayscale(processed)
+            processed = ImageEnhance.Contrast(processed).enhance(1.6)
+
+            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+            processed.save(tmp.name, format="PNG")
+            return tmp.name
+    except Exception as e:
+        logger.warning(f"Image preprocessing for OCR failed: {e}")
+        return image_path
 
 
 def get_tesseract_cmd() -> str | None:
@@ -104,10 +144,10 @@ def run_windows_native_ocr(image_path: str) -> str:
             ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps_script],
             capture_output=True,
             text=True,
-            timeout=8
+            timeout=15
         )
         if proc.returncode == 0:
-            return proc.stdout.strip()
+            return normalize_ocr_text(proc.stdout)
         else:
             logger.warning(f"Windows OCR returned non-zero code {proc.returncode}: {proc.stderr}")
             return ""
@@ -119,41 +159,55 @@ def run_windows_native_ocr(image_path: str) -> str:
 def extract_text_from_image(image_path: str) -> dict[str, Any]:
     """
     Extracts text from an image using the best available engine:
-    1. Tesseract OCR (if available)
-    2. Windows Native OCR (Windows.Media.Ocr)
-    3. Fallback
+    1. Preprocesses & enhances image (upscale + contrast) for high fidelity
+    2. Tesseract OCR (if available)
+    3. Windows Native OCR (Windows.Media.Ocr)
+    4. Fallback
     """
-    # 1. Try Tesseract
-    tess_cmd = get_tesseract_cmd()
-    if tess_cmd:
-        try:
-            with Image.open(image_path) as img:
-                gray = img.convert("L")
-                text = pytesseract.image_to_string(gray).strip()
-                if text:
-                    return {
-                        "text": text,
-                        "engine": f"Tesseract OCR ({tess_cmd})",
-                        "ocr_available": True
-                    }
-        except Exception as e:
-            logger.warning(f"Tesseract extraction error: {e}")
+    enhanced_path = preprocess_image_for_ocr(image_path)
+    cleanup_needed = enhanced_path != image_path
 
-    # 2. Try Windows Native OCR
-    if os.name == "nt":
-        native_text = run_windows_native_ocr(image_path)
-        if native_text:
-            return {
-                "text": native_text,
-                "engine": "Windows Native OCR (Windows.Media.Ocr)",
-                "ocr_available": True
-            }
+    try:
+        # 1. Try Tesseract
+        tess_cmd = get_tesseract_cmd()
+        if tess_cmd:
+            try:
+                with Image.open(enhanced_path) as img:
+                    gray = img.convert("L")
+                    text = pytesseract.image_to_string(gray).strip()
+                    if text:
+                        return {
+                            "text": normalize_ocr_text(text),
+                            "engine": f"Tesseract OCR ({tess_cmd})",
+                            "ocr_available": True
+                        }
+            except Exception as e:
+                logger.warning(f"Tesseract extraction error: {e}")
 
-    # 3. No OCR engine available
-    return {
-        "text": "",
-        "engine": "None",
-        "ocr_available": False,
-        "reason": "Neither Tesseract binary nor Windows Media OCR produced text"
-    }
+        # 2. Try Windows Native OCR
+        if os.name == "nt":
+            native_text = run_windows_native_ocr(enhanced_path)
+            if not native_text and enhanced_path != image_path:
+                # Retry on raw file if enhanced returned nothing
+                native_text = run_windows_native_ocr(image_path)
+            if native_text:
+                return {
+                    "text": normalize_ocr_text(native_text),
+                    "engine": "Windows Native OCR (Windows.Media.Ocr)",
+                    "ocr_available": True
+                }
+
+        # 3. No OCR engine available
+        return {
+            "text": "",
+            "engine": "None",
+            "ocr_available": False,
+            "reason": "Neither Tesseract binary nor Windows Media OCR produced text"
+        }
+    finally:
+        if cleanup_needed and os.path.exists(enhanced_path):
+            try:
+                os.unlink(enhanced_path)
+            except Exception:
+                pass
 
